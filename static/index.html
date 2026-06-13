@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MikroDash</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body x-data="dashboard()" x-init="init()">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="app-brand">
+      <div class="app-logo">M</div>
+      <div class="app-title">Mikro<span class="app-title-accent">Dash</span></div>
+    </div>
+    <div class="header-right">
+      <div class="router-identity" x-show="identity">
+        <span>Router:</span>
+        <strong x-text="identity"></strong>
+        <span class="router-dot" :class="{ offline: !connected }"></span>
+      </div>
+      <div class="router-identity" x-show="!identity">
+        <span class="router-dot offline"></span>
+        <span>Disconnected</span>
+      </div>
+      <button class="btn btn-sm" @click="refreshAll()" :disabled="refreshing">
+        <svg :class="{ spinning: refreshing }" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M1 7a6 6 0 0 1 10.2-4.2M13 7a6 6 0 0 1-10.2 4.2"/>
+          <path d="M13 1v4h-4M1 13V9h4"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav-bar">
+    <template x-for="(tab, i) in tabs" :key="i">
+      <button
+        class="nav-tab"
+        :class="{ active: activeTab === tab.id }"
+        @click="switchTab(tab.id)"
+        x-text="tab.label"
+      ></button>
+    </template>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!------------------------ Overview Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'overview' }" x-show="activeTab === 'overview'">
+
+      <!-- Quick Stats Row -->
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-body">
+            <div class="stat-row">
+              <div class="stat-icon" style="background: var(--info-bg); color: var(--info);">&#x2194;</div>
+              <div>
+                <div class="stat-value" x-text="quickStats.interfaces">--</div>
+                <div class="stat-label">Interfaces</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="stat-row">
+              <div class="stat-icon" style="background: var(--success-bg); color: var(--success);">IP</div>
+              <div>
+                <div class="stat-value" x-text="quickStats.addresses">--</div>
+                <div class="stat-label">IP Addresses</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="stat-row">
+              <div class="stat-icon" style="background: var(--warning-bg); color: var(--warning);">DH</div>
+              <div>
+                <div class="stat-value" x-text="quickStats.dhcpLeases">--</div>
+                <div class="stat-label">DHCP Leases</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="stat-row">
+              <div class="stat-icon" style="background: var(--danger-bg); color: var(--danger);">FW</div>
+              <div>
+                <div class="stat-value" x-text="quickStats.firewallRules">--</div>
+                <div class="stat-label">Firewall Rules</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Info + Resources -->
+      <div class="grid-2">
+        <!-- System Info -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">System Information</span>
+          </div>
+          <div class="card-body" x-show="!systemLoading && !systemError">
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-item-label">Identity</div>
+                <div class="info-item-value" x-text="system.identity || '--'">--</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item-label">Version</div>
+                <div class="info-item-value" x-text="system.version || '--'">--</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item-label">Architecture</div>
+                <div class="info-item-value" x-text="system.architecture || '--'">--</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item-label">Board</div>
+                <div class="info-item-value" x-text="system.boardName || '--'">--</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item-label">Uptime</div>
+                <div class="info-item-value" x-text="system.uptime || '--'">--</div>
+              </div>
+              <div class="info-item">
+                <div class="info-item-label">Platform</div>
+                <div class="info-item-value" x-text="system.platform || '--'">--</div>
+              </div>
+            </div>
+          </div>
+          <div class="loading-state" x-show="systemLoading">
+            <div class="loading-spinner"></div>
+            <span>Loading system info...</span>
+          </div>
+          <div class="error-state" x-show="systemError">
+            <span>Failed to load</span>
+            <span class="error-message" x-text="systemError"></span>
+            <button class="btn btn-sm retry-btn" @click="fetchSystem()">Retry</button>
+          </div>
+        </div>
+
+        <!-- Resource Gauges -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Resource Usage</span>
+          </div>
+          <div class="card-body" x-show="!resourcesLoading && !resourcesError">
+            <div class="gauge">
+              <div class="gauge-header">
+                <span class="gauge-label">CPU Load</span>
+                <span class="gauge-value" x-text="resources.cpu + '%'" :class="{ 'text-danger': resources.cpu > 80, 'text-warning': resources.cpu > 60 && resources.cpu <= 80 }">--%</span>
+              </div>
+              <div class="gauge-track">
+                <div class="gauge-fill cpu" :class="{ critical: resources.cpu > 80 }"
+                     :style="{ width: resources.cpu + '%' }"></div>
+              </div>
+            </div>
+            <div class="gauge">
+              <div class="gauge-header">
+                <span class="gauge-label">Free Memory</span>
+                <span class="gauge-value" x-text="resources.freeMemory + '%'">--%</span>
+              </div>
+              <div class="gauge-track">
+                <div class="gauge-fill memory" :class="{ critical: resources.freeMemory < 20 }"
+                     :style="{ width: resources.freeMemory + '%' }"></div>
+              </div>
+            </div>
+            <div class="gauge">
+              <div class="gauge-header">
+                <span class="gauge-label">Free HDD</span>
+                <span class="gauge-value" x-text="resources.freeHdd + '%'">--%</span>
+              </div>
+              <div class="gauge-track">
+                <div class="gauge-fill disk" :class="{ critical: resources.freeHdd < 20 }"
+                     :style="{ width: resources.freeHdd + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="loading-state" x-show="resourcesLoading">
+            <div class="loading-spinner"></div>
+            <span>Loading resources...</span>
+          </div>
+          <div class="error-state" x-show="resourcesError">
+            <span>Failed to load</span>
+            <span class="error-message" x-text="resourcesError"></span>
+            <button class="btn btn-sm retry-btn" @click="fetchResources()">Retry</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!------------------------ Interfaces Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'interfaces' }" x-show="activeTab === 'interfaces'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Interfaces</span>
+          <span class="text-muted" style="font-size:12px" x-show="interfaces.length">
+            <span x-text="interfaces.length"></span> total
+          </span>
+        </div>
+        <div class="table-wrap" x-show="!interfacesLoading && !interfacesError && interfaces.length">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>MAC Address</th>
+                <th>Status</th>
+                <th class="text-right">Rx Bytes</th>
+                <th class="text-right">Tx Bytes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="iface in interfaces" :key="iface.name || iface['.id']">
+                <tr>
+                  <td><strong x-text="iface.name || iface['.id']"></strong></td>
+                  <td x-text="iface.type || '--'"></td>
+                  <td class="mono" x-text="iface['mac-address'] || '--'"></td>
+                  <td>
+                    <span class="status">
+                      <span class="status-dot" :class="iface.running === 'true' || iface.disabled === 'false' ? 'running' : 'disabled'"></span>
+                      <span x-text="iface.running === 'true' || (iface.running !== 'false' && iface.disabled === 'false') ? 'Running' : iface.disabled === 'true' ? 'Disabled' : 'Stopped'"></span>
+                    </span>
+                  </td>
+                  <td class="text-right mono text-muted" x-text="formatBytes(iface['rx-byte'])"></td>
+                  <td class="text-right mono text-muted" x-text="formatBytes(iface['tx-byte'])"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="loading-state" x-show="interfacesLoading">
+          <div class="loading-spinner"></div>
+          <span>Loading interfaces...</span>
+        </div>
+        <div class="error-state" x-show="interfacesError">
+          <span>Failed to load interfaces</span>
+          <span class="error-message" x-text="interfacesError"></span>
+          <button class="btn btn-sm retry-btn" @click="fetchInterfaces()">Retry</button>
+        </div>
+        <div class="empty-state" x-show="!interfacesLoading && !interfacesError && !interfaces.length">
+          <span>No interfaces found</span>
+        </div>
+      </div>
+    </section>
+
+    <!------------------------ DHCP Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'dhcp' }" x-show="activeTab === 'dhcp'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">DHCP Leases</span>
+          <span class="text-muted" style="font-size:12px" x-show="dhcpLeases.length">
+            <span x-text="dhcpLeases.length"></span> leases
+          </span>
+        </div>
+        <div class="table-wrap" x-show="!dhcpLoading && !dhcpError && dhcpLeases.length">
+          <table>
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+                <th>Hostname</th>
+                <th>Server</th>
+                <th>Status</th>
+                <th>Expires After</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="lease in dhcpLeases" :key="lease['.id'] || lease['mac-address']">
+                <tr>
+                  <td class="mono" x-text="lease['address'] || lease['active-address'] || '--'"></td>
+                  <td class="mono" x-text="lease['mac-address'] || '--'"></td>
+                  <td x-text="lease['host-name'] || lease['comment'] || '--'"></td>
+                  <td x-text="lease['server'] || '--'"></td>
+                  <td>
+                    <span class="badge" :class="lease['status'] === 'bound' ? 'badge-success' : (lease['status'] === 'offered' ? 'badge-warning' : 'badge-mono')"
+                          x-text="lease['status'] || '--'"></span>
+                  </td>
+                  <td class="mono text-muted" x-text="lease['expires-after'] || '--'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="loading-state" x-show="dhcpLoading">
+          <div class="loading-spinner"></div>
+          <span>Loading DHCP leases...</span>
+        </div>
+        <div class="error-state" x-show="dhcpError">
+          <span>Failed to load DHCP leases</span>
+          <span class="error-message" x-text="dhcpError"></span>
+          <button class="btn btn-sm retry-btn" @click="fetchDhcp()">Retry</button>
+        </div>
+        <div class="empty-state" x-show="!dhcpLoading && !dhcpError && !dhcpLeases.length">
+          <span>No DHCP leases found</span>
+        </div>
+      </div>
+    </section>
+
+    <!------------------------ Firewall Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'firewall' }" x-show="activeTab === 'firewall'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Firewall Filter Rules</span>
+          <span class="text-muted" style="font-size:12px" x-show="firewallRules.length">
+            <span x-text="firewallRules.length"></span> rules
+          </span>
+        </div>
+        <div class="table-wrap" x-show="!firewallLoading && !firewallError && firewallRules.length">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Chain</th>
+                <th>Action</th>
+                <th>Src Address</th>
+                <th>Dst Address</th>
+                <th>Protocol</th>
+                <th class="text-right">Bytes</th>
+                <th class="text-right">Packets</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(rule, idx) in firewallRules" :key="rule['.id'] || idx">
+                <tr>
+                  <td class="text-muted" x-text="idx + 1"></td>
+                  <td>
+                    <span class="badge" :class="rule.chain === 'input' ? 'badge-info' : (rule.chain === 'forward' ? 'badge-warning' : (rule.chain === 'output' ? 'badge-success' : 'badge-mono'))"
+                          x-text="rule.chain || '--'"></span>
+                  </td>
+                  <td>
+                    <span class="badge" :class="rule.action === 'accept' ? 'badge-success' : (rule.action === 'drop' ? 'badge-danger' : 'badge-warning')"
+                          x-text="rule.action || '--'"></span>
+                  </td>
+                  <td class="mono" x-text="rule['src-address'] || 'any'"></td>
+                  <td class="mono" x-text="rule['dst-address'] || 'any'"></td>
+                  <td x-text="rule.protocol || 'any'"></td>
+                  <td class="text-right mono text-muted" x-text="formatBytes(rule.bytes)"></td>
+                  <td class="text-right mono text-muted" x-text="formatNumber(rule.packets)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="loading-state" x-show="firewallLoading">
+          <div class="loading-spinner"></div>
+          <span>Loading firewall rules...</span>
+        </div>
+        <div class="error-state" x-show="firewallError">
+          <span>Failed to load firewall rules</span>
+          <span class="error-message" x-text="firewallError"></span>
+          <button class="btn btn-sm retry-btn" @click="fetchFirewall()">Retry</button>
+        </div>
+        <div class="empty-state" x-show="!firewallLoading && !firewallError && !firewallRules.length">
+          <span>No firewall rules found</span>
+        </div>
+      </div>
+    </section>
+
+    <!------------------------ Wireless Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'wireless' }" x-show="activeTab === 'wireless'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Wireless Interfaces</span>
+          <span class="text-muted" style="font-size:12px" x-show="wirelessInterfaces.length">
+            <span x-text="wirelessInterfaces.length"></span> interfaces
+          </span>
+        </div>
+        <div class="table-wrap" x-show="!wirelessLoading && !wirelessError && wirelessInterfaces.length">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>SSID</th>
+                <th>Band</th>
+                <th>Frequency</th>
+                <th>Channel</th>
+                <th>Status</th>
+                <th class="text-right">Clients</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="wlan in wirelessInterfaces" :key="wlan['.id'] || wlan.name">
+                <tr>
+                  <td><strong x-text="wlan.name || wlan['.id']"></strong></td>
+                  <td x-text="wlan.ssid || '--'"></td>
+                  <td x-text="wlan.band || '--'"></td>
+                  <td class="mono" x-text="wlan.frequency ? wlan.frequency + ' MHz' : '--'"></td>
+                  <td x-text="wlan.channel || wlan['current-channel'] || '--'"></td>
+                  <td>
+                    <span class="status">
+                      <span class="status-dot" :class="wlan.disabled === 'false' || wlan.running === 'true' ? 'running' : 'disabled'"></span>
+                      <span x-text="wlan.disabled === 'false' || wlan.running === 'true' ? 'Running' : 'Disabled'"></span>
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <span class="badge" :class="(wlan['registered-clients'] || wlan['client-count'] || 0) > 0 ? 'badge-info' : 'badge-mono'"
+                          x-text="wlan['registered-clients'] || wlan['client-count'] || 0"></span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="loading-state" x-show="wirelessLoading">
+          <div class="loading-spinner"></div>
+          <span>Loading wireless interfaces...</span>
+        </div>
+        <div class="error-state" x-show="wirelessError">
+          <span>Failed to load wireless interfaces</span>
+          <span class="error-message" x-text="wirelessError"></span>
+          <button class="btn btn-sm retry-btn" @click="fetchWireless()">Retry</button>
+        </div>
+        <div class="empty-state" x-show="!wirelessLoading && !wirelessError && !wirelessInterfaces.length">
+          <span>No wireless interfaces found</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Refresh status bar -->
+  <div class="refresh-bar">
+    <span>Auto-refresh every 30s</span>
+    &middot;
+    <span>
+      Last updated:
+      <span x-text="lastRefresh || 'never'" class="mono"></span>
+    </span>
+    &middot;
+    <span class="status" x-show="refreshing">
+      <span class="status-dot running"></span>
+      Refreshing...
+    </span>
+    <span class="status" x-show="!refreshing && lastRefresh">
+      <span class="status-dot running"></span>
+      Connected
+    </span>
+  </div>
+
+  <!-- AlpineJS App -->
+  <script>
+  function dashboard() {
+    return {
+      // --- UI State ---
+      activeTab: 'overview',
+      tabs: [
+        { id: 'overview', label: 'Overview' },
+        { id: 'interfaces', label: 'Interfaces' },
+        { id: 'dhcp', label: 'DHCP' },
+        { id: 'firewall', label: 'Firewall' },
+        { id: 'wireless', label: 'Wireless' },
+      ],
+      refreshing: false,
+      connected: false,
+      lastRefresh: null,
+      _interval: null,
+
+      // --- Data ---
+      identity: '',
+      system: {},
+      resources: { cpu: 0, freeMemory: 0, freeHdd: 0 },
+      quickStats: { interfaces: 0, addresses: 0, dhcpLeases: 0, firewallRules: 0 },
+      interfaces: [],
+      dhcpLeases: [],
+      firewallRules: [],
+      wirelessInterfaces: [],
+
+      // --- Loading/Error per section ---
+      systemLoading: true,
+      systemError: '',
+      resourcesLoading: true,
+      resourcesError: '',
+      interfacesLoading: true,
+      interfacesError: '',
+      dhcpLoading: true,
+      dhcpError: '',
+      firewallLoading: true,
+      firewallError: '',
+      wirelessLoading: true,
+      wirelessError: '',
+
+      // --- Init ---
+      init() {
+        this.refreshAll();
+        this._interval = setInterval(() => { this.refreshAll(); }, 30000);
+      },
+
+      // --- Tab switching ---
+      switchTab(tabId) {
+        this.activeTab = tabId;
+      },
+
+      // --- Refresh all data ---
+      async refreshAll() {
+        this.refreshing = true;
+        try {
+          await Promise.all([
+            this.fetchSystem(),
+            this.fetchResources(),
+          ]);
+          // Fire section fetches based on active tab priority, but do all
+          const results = await Promise.allSettled([
+            this.fetchInterfaces(),
+            this.fetchDhcp(),
+            this.fetchFirewall(),
+            this.fetchWireless(),
+          ]);
+          this.connected = true;
+          this.lastRefresh = new Date().toLocaleTimeString();
+        } catch (e) {
+          // connectivity check already handled in each fetch
+        }
+        this.refreshing = false;
+      },
+
+      // --- API helper ---
+      async apiFetch(endpoint) {
+        try {
+          const res = await fetch(endpoint);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+          return await res.json();
+        } catch (err) {
+          throw err;
+        }
+      },
+
+      // --- System ---
+      async fetchSystem() {
+        this.systemLoading = true;
+        this.systemError = '';
+        try {
+          const data = await this.apiFetch('/api/system/resource');
+          const idData = await this.apiFetch('/api/system/identity').catch(() => ({}));
+
+          this.system = {
+            identity: idData.name || idData.identity || '',
+            version: data.version || '',
+            architecture: data['architecture-name'] || '',
+            boardName: data['board-name'] || '',
+            uptime: this.formatUptime(data.uptime),
+            platform: data.platform || '',
+          };
+          this.identity = this.system.identity;
+          this.connected = true;
+        } catch (err) {
+          this.systemError = err.message || 'Unable to reach API';
+          this.connected = false;
+        }
+        this.systemLoading = false;
+      },
+
+      // --- Resources ---
+      async fetchResources() {
+        this.resourcesLoading = true;
+        this.resourcesError = '';
+        try {
+          const data = await this.apiFetch('/api/system/resource');
+          this.resources = {
+            cpu: Math.round(parseFloat(data['cpu-load']) || 0),
+            freeMemory: Math.round(parseFloat(data['free-memory']) / parseFloat(data['total-memory']) * 100) || 0,
+            freeHdd: Math.round(parseFloat(data['free-hdd-space']) / parseFloat(data['total-hdd-space']) * 100) || 0,
+          };
+        } catch (err) {
+          this.resourcesError = err.message || 'Unable to reach API';
+        }
+        this.resourcesLoading = false;
+      },
+
+      // --- Interfaces ---
+      async fetchInterfaces() {
+        this.interfacesLoading = true;
+        this.interfacesError = '';
+        try {
+          this.interfaces = await this.apiFetch('/api/interface');
+          this.quickStats.interfaces = this.interfaces.length;
+        } catch (err) {
+          this.interfacesError = err.message || 'Unable to reach API';
+        }
+        this.interfacesLoading = false;
+      },
+
+      // --- DHCP ---
+      async fetchDhcp() {
+        this.dhcpLoading = true;
+        this.dhcpError = '';
+        try {
+          this.dhcpLeases = await this.apiFetch('/api/ip/dhcp-server/lease');
+          this.quickStats.dhcpLeases = this.dhcpLeases.length;
+        } catch (err) {
+          this.dhcpError = err.message || 'Unable to reach API';
+        }
+        this.dhcpLoading = false;
+      },
+
+      // --- Firewall ---
+      async fetchFirewall() {
+        this.firewallLoading = true;
+        this.firewallError = '';
+        try {
+          this.firewallRules = await this.apiFetch('/api/ip/firewall/filter');
+          this.quickStats.firewallRules = this.firewallRules.length;
+        } catch (err) {
+          this.firewallError = err.message || 'Unable to reach API';
+        }
+        this.firewallLoading = false;
+      },
+
+      // --- Wireless ---
+      async fetchWireless() {
+        this.wirelessLoading = true;
+        this.wirelessError = '';
+        try {
+          this.wirelessInterfaces = await this.apiFetch('/api/interface/wireless');
+        } catch (err) {
+          this.wirelessError = err.message || 'Unable to reach API';
+        }
+        this.wirelessLoading = false;
+      },
+
+      // --- Utility ---
+      formatUptime(seconds) {
+        if (!seconds) return '--';
+        const s = typeof seconds === 'string' ? parseDuration(seconds) : parseInt(seconds);
+        if (isNaN(s)) return seconds;
+        const d = Math.floor(s / 86400);
+        const h = Math.floor((s % 86400) / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const parts = [];
+        if (d) parts.push(d + 'd');
+        if (h) parts.push(h + 'h');
+        if (m || !parts.length) parts.push(m + 'm');
+        return parts.join(' ');
+      },
+
+      formatBytes(bytes) {
+        if (!bytes && bytes !== 0) return '--';
+        const b = parseInt(bytes);
+        if (isNaN(b)) return bytes;
+        if (b === 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(b) / Math.log(1024));
+        return (b / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+      },
+
+      formatNumber(n) {
+        if (!n && n !== 0) return '--';
+        const num = parseInt(n);
+        if (isNaN(num)) return n;
+        if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+        return num.toString();
+      },
+    };
+
+    function parseDuration(str) {
+      // Parse MikroTik duration format like "1w2d3h4m5s"
+      if (!str) return NaN;
+      let total = 0;
+      const re = /(\d+)([wdhms])/g;
+      let m;
+      const mult = { w: 604800, d: 86400, h: 3600, m: 60, s: 1 };
+      while ((m = re.exec(str)) !== null) {
+        total += parseInt(m[1]) * (mult[m[2]] || 0);
+      }
+      return total > 0 ? total : NaN;
+    }
+  }
+  </script>
+</body>
+</html>
