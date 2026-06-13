@@ -428,18 +428,19 @@ a {
 .hw-details { margin-top: 4px; }
 .hw-detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 2px 12px;
 }
-.hw-detail {
+.hw-detail-item {
   display: flex;
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
   padding: 2px 0;
+  white-space: nowrap;
 }
 .hw-detail-label { color: var(--text-muted); }
-.hw-detail-val { color: #94a3b8; }
+.hw-detail-val { color: #94a3b8; overflow: hidden; text-overflow: ellipsis; }
 .hw-mono { font-family: var(--font-mono); }
 
 /* ---------- Resource gauges ---------- */
@@ -1214,3 +1215,60 @@ tbody tr:last-child td {
 }
 .eth-traffic-label { color: var(--text-muted); }
 .eth-traffic-val   { color: #94a3b8; font-family: var(--font-mono); }
+
+/* ---------- DHCP subnet stats ---------- */
+.dhcp-subnets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 16px 10px;
+}
+.dhcp-subnet-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.dhcp-subnet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dhcp-subnet-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+}
+.dhcp-subnet-pct {
+  font-size: 11px;
+  font-weight: 600;
+  color: #22c55e;
+  font-family: var(--font-mono);
+}
+.dhcp-subnet-bar-track {
+  height: 4px;
+  background: #1e293b;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dhcp-subnet-bar-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.dhcp-subnet-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dhcp-subnet-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}

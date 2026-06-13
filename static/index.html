@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MikroDash</title>
+  <title>RouterDash</title>
   <link rel="stylesheet" href="/css/style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -14,7 +14,7 @@
   <header class="app-header">
     <div class="app-brand">
       <div class="app-logo">M</div>
-      <div class="app-title">Mikro<span class="app-title-accent">Dash</span></div>
+      <div class="app-title">Router<span class="app-title-accent">Dash</span></div>
     </div>
     <div class="header-right">
       <div class="router-identity" x-show="identity">
@@ -378,6 +378,23 @@
             <span x-text="dhcpLeases.length"></span> leases
           </span>
         </div>
+        <!-- Subnet stats -->
+        <div class="dhcp-subnets" x-show="!dhcpLoading && !dhcpError && dhcpLeases.length">
+          <template x-for="s in dhcpSubnets" :key="s.subnet">
+            <div class="dhcp-subnet-item">
+              <div class="dhcp-subnet-header">
+                <span class="dhcp-subnet-label" x-text="s.subnet"></span>
+                <span class="dhcp-subnet-pct" x-text="s.usedPct + '%'"></span>
+              </div>
+              <div class="dhcp-subnet-bar-track">
+                <div class="dhcp-subnet-bar-fill" :style="{ width: s.usedPct + '%' }"></div>
+              </div>
+              <div class="dhcp-subnet-footer">
+                <span class="dhcp-subnet-hint" x-text="s.bound + ' / ' + s.available + ' used'"></span>
+              </div>
+            </div>
+          </template>
+        </div>
         <div class="table-wrap" x-show="!dhcpLoading && !dhcpError && dhcpLeases.length">
           <table>
             <thead>
@@ -445,13 +462,11 @@
             <button :class="'fw-toggle-btn ' + (fwView === 'topology' ? 'active' : '')" @click="fwView = 'topology'">Topology</button>
             <button :class="'fw-toggle-btn ' + (fwView === 'flow' ? 'active' : '')" @click="fwView = 'flow'">Chain Flow</button>
           </div>
-          <template x-if="fwView === 'flow'">
-            <div class="fw-chain-tabs">
-              <template x-for="ch in fwChains" :key="ch">
-                <button :class="'fw-toggle-btn ' + (fwChain === ch ? 'active' : '')" @click="fwChain = ch" x-text="ch"></button>
-              </template>
-            </div>
-          </template>
+          <div class="fw-chain-tabs">
+            <template x-for="ch in fwChains" :key="ch">
+              <button :class="'fw-toggle-btn ' + (fwChain === ch ? 'active' : '')" @click="fwChain = ch" x-text="ch"></button>
+            </template>
+          </div>
           <span class="fw-legend-item"><span class="fw-legend-swatch accept"></span> Accept</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch drop"></span> Drop</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch reject"></span> Reject</span>
@@ -468,11 +483,14 @@
         <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwGraph.nodes.length && fwView === 'topology'" x-html="fwGraphSvg"></div>
         <!-- Chain flow view -->
         <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView === 'flow'" x-html="fwChainFlow"></div>
+        <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length && fwView !== 'flow'">
+          <span x-text="'No rules in ' + fwChain + ' chain'"></span>
+        </div>
         <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length && fwView === 'flow'">
           <span x-text="'No rules in ' + fwChain + ' chain'"></span>
         </div>
         <!-- Rule table -->
-        <div class="fw-table-wrap" x-show="!firewallLoading && !firewallError && firewallRules.length && fwView !== 'flow'">
+        <div class="fw-table-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView !== 'flow'">
           <table>
             <thead>
               <tr>
@@ -487,7 +505,7 @@
               </tr>
             </thead>
             <tbody>
-              <template x-for="(rule, idx) in firewallRules" :key="rule['.id'] || idx">
+              <template x-for="(rule, idx) in fwChainRules" :key="rule['.id'] || idx">
                 <tr>
                   <td class="text-muted" x-text="idx + 1"></td>
                   <td><span class="badge" :class="rule.chain === 'input' ? 'badge-info' : (rule.chain === 'forward' ? 'badge-warning' : (rule.chain === 'output' ? 'badge-success' : 'badge-mono'))" x-text="rule.chain || '--'"></span></td>
@@ -653,7 +671,7 @@
 
       // --- Init ---
       init() {
-        const saved = localStorage.getItem('mikrodash-tab');
+        const saved = localStorage.getItem('routerdash-tab');
         if (saved && this.tabs.some(t => t.id === saved)) this.activeTab = saved;
         this.refreshAll();
         this._interval = setInterval(() => { this.refreshAll(); }, 30000);
@@ -662,7 +680,7 @@
       // --- Tab switching ---
       switchTab(tabId) {
         this.activeTab = tabId;
-        localStorage.setItem('mikrodash-tab', tabId);
+        localStorage.setItem('routerdash-tab', tabId);
       },
 
       // --- Refresh all data ---
@@ -840,12 +858,39 @@
         if (!hasData) { this.dhcpLoading = false; }
       },
 
+      get dhcpSubnets() {
+        const subnets = {};
+        for (const l of this.dhcpLeases) {
+          const ip = l['address'] || l['active-address'];
+          if (!ip) continue;
+          const parts = ip.split('.');
+          if (parts.length !== 4) continue;
+          const prefix = parts.slice(0, 3).join('.');
+          if (!subnets[prefix]) subnets[prefix] = { total: 0, bound: 0 };
+          subnets[prefix].total++;
+          if (l.status === 'bound') subnets[prefix].bound++;
+        }
+        return Object.entries(subnets).map(([prefix, s]) => ({
+          subnet: prefix + '.0/24',
+          total: s.total,
+          bound: s.bound,
+          available: 254,
+          usedPct: Math.round(s.bound / 254 * 100),
+        }));
+      },
+
       // --- Firewall ---
       async fetchFirewall() {
         const hasData = this.firewallRules.length > 0;
         if (!hasData) { this.firewallLoading = true; this.firewallError = ''; }
         try {
-          this.firewallRules = await this.apiFetch('/api/ip/firewall/filter');
+          const [filter, nat, mangle, raw] = await Promise.all([
+            this.apiFetch('/api/ip/firewall/filter').catch(() => []),
+            this.apiFetch('/api/ip/firewall/nat').catch(() => []),
+            this.apiFetch('/api/ip/firewall/mangle').catch(() => []),
+            this.apiFetch('/api/ip/firewall/raw').catch(() => []),
+          ]);
+          this.firewallRules = [...filter, ...nat, ...mangle, ...raw];
           this.quickStats.firewallRules = this.firewallRules.length;
           this.buildFirewallGraph();
         } catch (err) {

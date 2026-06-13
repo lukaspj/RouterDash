@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"mikrodash/internal/config"
-	"mikrodash/internal/handler"
-	"mikrodash/internal/routeros"
+	"routerdash/internal/config"
+	"routerdash/internal/handler"
+	"routerdash/internal/routeros"
 )
 
 func main() {
@@ -39,6 +39,9 @@ func main() {
 			"/api/ip/route":              h.HandleIPRoutes,
 			"/api/ip/dhcp-server/lease":  h.HandleDHCPLeases,
 			"/api/ip/firewall/filter":    h.HandleFirewallFilter,
+			"/api/ip/firewall/nat":       h.HandleFirewallNat,
+			"/api/ip/firewall/mangle":    h.HandleFirewallMangle,
+			"/api/ip/firewall/raw":       h.HandleFirewallRaw,
 			"/api/interface/wireless":    h.HandleWirelessInterfaces,
 			"/api/interface/bridge/port": h.HandleBridgePorts,
 			"/api/interface/ethernet":   h.HandleEthernetInterfaces,
@@ -47,7 +50,7 @@ func main() {
 		},
 	}
 
-	log.Printf("mikrodash starting on %s", cfg.ListenAddr)
+	log.Printf("routerdash starting on %s", cfg.ListenAddr)
 	log.Fatal(http.ListenAndServe(cfg.ListenAddr, srv))
 }
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"mikrodash/internal/routeros"
+	"routerdash/internal/routeros"
 )
 
 type Handler struct {
@@ -43,6 +43,18 @@ func (h *Handler) HandleDHCPLeases(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HandleFirewallFilter(w http.ResponseWriter, r *http.Request) {
 	h.proxy(w, "ip/firewall/filter")
+}
+
+func (h *Handler) HandleFirewallNat(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "ip/firewall/nat")
+}
+
+func (h *Handler) HandleFirewallMangle(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "ip/firewall/mangle")
+}
+
+func (h *Handler) HandleFirewallRaw(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "ip/firewall/raw")
 }
 
 func (h *Handler) HandleWirelessInterfaces(w http.ResponseWriter, r *http.Request) {
