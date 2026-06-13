@@ -765,9 +765,26 @@
         const rules = this.fwChainRules;
         if (!rules.length) return '';
         const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        const colW = 170, boxW = 150, boxH = 100, boxY = 30;
-        const w = 120 + rules.length * colW + 140;
-        const h = 210;
+        const fmtBytes = (b) => {
+          const n = parseInt(b);
+          if (!n) return '0 B';
+          if (n >= 1e9) return (n/1e9).toFixed(1)+' GB';
+          if (n >= 1e6) return (n/1e6).toFixed(1)+' MB';
+          if (n >= 1e3) return (n/1e3).toFixed(1)+' KB';
+          return n+' B';
+        };
+        const fmtNum = (n) => {
+          const v = parseInt(n);
+          if (!v) return '0';
+          if (v >= 1e6) return (v/1e6).toFixed(1)+'M';
+          if (v >= 1e3) return (v/1e3).toFixed(1)+'K';
+          return v.toString();
+        };
+        const spacing = 44, boxW = 160, boxH = 32;
+        const cx = 24, bx = cx + 4;
+        const pillX = cx + boxW + 28;
+        const h = 36 + rules.length * spacing + 42;
+        const w = 280;
         let svg = `<svg viewBox="0 0 ${w} ${h}" class="fw-svg">`;
         svg += '<defs><marker id="cf-arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#64748b"/></marker>';
         svg += '<marker id="cf-arr-accept" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#22c55e"/></marker>';
@@ -777,56 +794,49 @@
         svg += '<marker id="cf-arr-fasttrack-connection" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#14b8a6"/></marker>';
         svg += '</defs>';
         // Entry node
-        const entryX = 60;
-        svg += `<rect x="${entryX - 42}" y="${boxY + boxH/2 - 9}" width="84" height="18" rx="9" class="cf-node cf-entry"/><text x="${entryX}" y="${boxY + boxH/2 + 3}" class="cf-node-label" text-anchor="middle">${this.fwChain.toUpperCase()}</text>`;
-        // Arrow from entry to first rule
-        if (rules.length) {
-          svg += `<line x1="${entryX + 42}" y1="${boxY + boxH/2}" x2="${140}" y2="${boxY + boxH/2}" class="cf-edge cf-vline" marker-end="url(#cf-arr)"/>`;
-        }
+        svg += `<rect x="${cx + boxW/2 - 30}" y="6" width="60" height="12" rx="6" class="cf-node cf-entry"/><text x="${cx + boxW/2}" y="14" class="cf-node-label" text-anchor="middle">${this.fwChain.toUpperCase()} CHAIN</text>`;let lastY = 18;
         rules.forEach((r, i) => {
-          const cx = 140 + i * colW;
-          const bx = cx, by = boxY;
+          const y = 26 + i * spacing;
           const action = r.action || 'accept';
-          const midY = by + boxH/2;
           const conds = [];
           if (r['src-address'] && r['src-address'] !== '0.0.0.0/0') conds.push('src=' + r['src-address']);
           if (r['dst-address'] && r['dst-address'] !== '0.0.0.0/0') conds.push('dst=' + r['dst-address']);
           if (r['in-interface'] && r['in-interface'] !== 'all') conds.push('in=' + r['in-interface']);
           if (r['out-interface'] && r['out-interface'] !== 'all') conds.push('out=' + r['out-interface']);
           if (r['connection-state'] && r['connection-state'] !== 'all') conds.push('conn=' + r['connection-state']);
-          if (r.comment) conds.push('#' + r.comment);
           if (r.protocol && r.protocol !== 'all') conds.push(r.protocol);
+          if (r.comment) conds.push('#' + r.comment);
           const condLines = [];
           let cur = '';
           conds.forEach(c => {
-            if (cur && (cur.length + c.length) > 34) { condLines.push(cur); cur = c; }
+            if (cur && (cur.length + c.length) > 20) { condLines.push(cur); cur = c; }
             else cur = cur ? cur + ' ' + c : c;
           });
           if (cur) condLines.push(cur);
+          const traffic = 'traffic: ' + fmtBytes(r.bytes) + ' / ' + fmtNum(r.packets) + ' pkts';
+          // Vertical arrow from previous
+          svg += `<line x1="${cx + boxW/2}" y1="${lastY}" x2="${cx + boxW/2}" y2="${y + 4}" class="cf-vline"/><line x1="${cx + boxW/2 - 4}" y1="${y}" x2="${cx + boxW/2}" y2="${y + 4}" class="cf-vline"/><line x1="${cx + boxW/2 + 4}" y1="${y}" x2="${cx + boxW/2}" y2="${y + 4}" class="cf-vline"/>`;
+          svg += `<text x="${cx + boxW/2 + 8}" y="${lastY + (y - lastY)/2 + 3}" class="cf-nomatch">no match</text>`;
           // Rule box
-          svg += `<rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="4" class="cf-rule-box"/>`;
-          svg += `<text x="${bx + 6}" y="${by + 12}" class="cf-rule-num">#${i+1} ${action}</text>`;
+          svg += `<rect x="${bx}" y="${y}" width="${boxW}" height="${boxH}" rx="4" class="cf-rule-box"/>`;
+          svg += `<text x="${bx + 4}" y="${y + 8}" class="cf-rule-num">#${i+1} ${action}</text>`;
+          svg += `<text x="${bx + 48}" y="${y + 8}" class="cf-traffic">${esc(traffic)}</text>`;
           condLines.forEach((cl, li) => {
-            if (li >= 6) return;
-            svg += `<text x="${bx + 6}" y="${by + 24 + li * 11}" class="cf-rule-cond">${esc(cl.slice(0, 36))}</text>`;
+            if (li >= 1) return;
+            svg += `<text x="${bx + 4}" y="${y + 16 + li * 10}" class="cf-rule-cond">${esc(cl.slice(0, 22))}</text>`;
           });
-          // Match arrow down to action pill
-          svg += `<line x1="${bx + boxW/2}" y1="${by + boxH}" x2="${bx + boxW/2}" y2="${by + boxH + 26}" class="cf-edge cf-${action}" marker-end="url(#cf-arr-${action})"/>`;
-          svg += `<text x="${bx + boxW/2 + 5}" y="${by + boxH + 16}" class="cf-match">match</text>`;
+          // Match arrow to action pill
+          const my = y + boxH/2;
+          svg += `<line x1="${bx + boxW}" y1="${my}" x2="${pillX}" y2="${my}" class="cf-edge cf-${action}" marker-end="url(#cf-arr-${action})"/>`;
+          svg += `<text x="${bx + boxW + (pillX - bx - boxW)/2}" y="${my - 4}" class="cf-match" text-anchor="middle">match</text>`;
           // Action pill
-          svg += `<rect x="${bx + boxW/2 - 22}" y="${by + boxH + 26}" width="44" height="14" rx="7" class="cf-action-pill cf-${action}"/><text x="${bx + boxW/2}" y="${by + boxH + 36}" class="cf-action-label" text-anchor="middle">${action}</text>`;
-          // No-match arrow to next rule
-          if (i < rules.length - 1) {
-            const nbx = 140 + (i + 1) * colW;
-            svg += `<line x1="${bx + boxW}" y1="${midY}" x2="${nbx}" y2="${midY}" class="cf-vline" marker-end="url(#cf-arr)"/>`;
-            svg += `<text x="${bx + boxW + (nbx - bx - boxW)/2}" y="${midY - 4}" class="cf-nomatch" text-anchor="middle">no match</text>`;
-          }
+          svg += `<rect x="${pillX}" y="${my - 6}" width="36" height="12" rx="6" class="cf-action-pill cf-${action}"/><text x="${pillX + 18}" y="${my + 2}" class="cf-action-label" text-anchor="middle">${action}</text>`;
+          lastY = y + boxH;
         });
         // Default action
-        const defX = 140 + rules.length * colW;
-        svg += `<line x1="${140 + (rules.length - 1) * colW + boxW}" y1="${boxY + boxH/2}" x2="${defX}" y2="${boxY + boxH/2}" class="cf-vline" marker-end="url(#cf-arr)"/>`;
-        svg += `<text x="${defX - colW/2}" y="${boxY + boxH/2 - 4}" class="cf-nomatch" text-anchor="middle">no match</text>`;
-        svg += `<rect x="${defX}" y="${boxY + boxH/2 - 9}" width="102" height="18" rx="9" class="cf-node cf-default"/><text x="${defX + 51}" y="${boxY + boxH/2 + 3}" class="cf-node-label" text-anchor="middle">DEFAULT: accept</text>`;
+        svg += `<line x1="${cx + boxW/2}" y1="${lastY}" x2="${cx + boxW/2}" y2="${lastY + 16}" class="cf-vline"/>`;
+        svg += `<text x="${cx + boxW/2 + 6}" y="${lastY + 10}" class="cf-nomatch">no match</text>`;
+        svg += `<rect x="${cx + boxW/2 - 32}" y="${lastY + 16}" width="64" height="12" rx="6" class="cf-node cf-default"/><text x="${cx + boxW/2}" y="${lastY + 24}" class="cf-node-label" text-anchor="middle">DEFAULT</text>`;
         svg += '</svg>';
         return svg;
       },

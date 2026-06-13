@@ -810,23 +810,24 @@ tbody tr:last-child td {
 }
 
 .cf-vline { stroke: #475569; stroke-width: 1.5; }
-.cf-nomatch { fill: #64748b; font-size: 6px; font-family: var(--font); }
+.cf-nomatch { fill: #64748b; font-size: 5px; font-family: var(--font); }
 .cf-match { fill: #64748b; font-size: 5px; font-family: var(--font); text-anchor: middle; }
 
 .cf-node { fill: #1e293b; stroke-width: 1.5; }
 .cf-entry { stroke: #3b82f6; }
 .cf-default { stroke: #f59e0b; }
-.cf-node-label { fill: #e2e8f0; font-size: 7px; font-family: var(--font); font-weight: 600; }
+.cf-node-label { fill: #e2e8f0; font-size: 5px; font-family: var(--font); font-weight: 600; }
 
 .cf-rule-box { fill: #0f172a; stroke: #334155; stroke-width: 1; }
-.cf-rule-num { fill: #64748b; font-size: 6px; font-family: var(--font-mono); }
-.cf-rule-action { font-size: 6px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+.cf-rule-num { fill: #64748b; font-size: 5px; font-family: var(--font-mono); }
+.cf-rule-action { font-size: 5px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
 .cf-rule-action.cf-accept { fill: #22c55e; }
 .cf-rule-action.cf-drop { fill: #ef4444; }
 .cf-rule-action.cf-reject { fill: #f59e0b; }
 .cf-rule-action.cf-passthrough { fill: #3b82f6; }
 .cf-rule-action.cf-fasttrack-connection { fill: #14b8a6; }
-.cf-rule-cond { fill: #94a3b8; font-size: 6px; font-family: var(--font-mono); }
+.cf-rule-cond { fill: #94a3b8; font-size: 5px; font-family: var(--font-mono); }
+.cf-traffic { fill: #64748b; font-size: 5px; font-family: var(--font-mono); }
 
 .cf-edge { stroke-width: 1.5; fill: none; }
 .cf-edge.cf-accept { stroke: #22c55e; }
@@ -841,4 +842,4 @@ tbody tr:last-child td {
 .cf-action-pill.cf-reject { stroke: #f59e0b; }
 .cf-action-pill.cf-passthrough { stroke: #3b82f6; }
 .cf-action-pill.cf-fasttrack-connection { stroke: #14b8a6; }
-.cf-action-label { fill: #e2e8f0; font-size: 6px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+.cf-action-label { fill: #e2e8f0; font-size: 5px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
