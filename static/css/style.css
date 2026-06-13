@@ -932,3 +932,45 @@ tbody tr:last-child td {
 }
 .port-traffic-label { color: var(--text-muted); }
 .port-traffic-val   { color: #94a3b8; font-family: var(--font-mono); }
+
+/* ---------- Bridge Groups ---------- */
+.bridge-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.bridge-group {
+  border: 2px dashed #a855f7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #0f172a;
+}
+.bridge-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c084fc;
+  font-family: var(--font-mono);
+  margin-bottom: 6px;
+}
+.bridge-icon { font-size: 16px; }
+.bridge-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.bridge-member {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #94a3b8;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.bridge-group.bg-up   { border-color: #a855f7; }
+.bridge-group.bg-down { border-color: #374151; }

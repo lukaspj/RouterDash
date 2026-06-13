@@ -40,6 +40,7 @@ func main() {
 			"/api/ip/dhcp-server/lease":  h.HandleDHCPLeases,
 			"/api/ip/firewall/filter":    h.HandleFirewallFilter,
 			"/api/interface/wireless":    h.HandleWirelessInterfaces,
+			"/api/interface/bridge/port": h.HandleBridgePorts,
 		},
 	}
 

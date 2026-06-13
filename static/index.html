@@ -208,7 +208,7 @@
           </span>
         </div>
         <div class="port-grid" x-show="!interfacesLoading && !interfacesError && interfaces.length">
-          <template x-for="iface in interfaces" :key="iface.name || iface['.id']">
+          <template x-for="iface in portInterfaces" :key="iface.name || iface['.id']">
             <div class="port-card"
                  :class="{
                    'port-up': iface.running === 'true' || (iface.disabled === 'false' && iface.running !== 'false'),
@@ -246,6 +246,35 @@
           <div class="loading-spinner"></div>
           <span>Loading interfaces...</span>
         </div>
+        <!-- Bridge groups -->
+        <template x-if="bridgePorts.length">
+          <div class="bridge-groups">
+            <template x-for="(members, bridge) in bridgeGroups" :key="bridge">
+              <div class="bridge-group" :class="members.running ? 'bg-up' : 'bg-down'">
+                <div class="bridge-header">
+                  <span class="bridge-icon">&#x2395;</span>
+                  <span x-text="members.bridge"></span>
+                  <span class="text-muted" style="font-size:10px">bridge</span>
+                </div>
+                <div class="bridge-members">
+                  <template x-for="m in members.members" :key="m">
+                    <span class="bridge-member" x-text="m"></span>
+                  </template>
+                </div>
+                <div class="port-traffic">
+                  <div class="port-traffic-row">
+                    <span class="port-traffic-label">RX</span>
+                    <span class="port-traffic-val" x-text="formatBytes(members.rx)"></span>
+                  </div>
+                  <div class="port-traffic-row">
+                    <span class="port-traffic-label">TX</span>
+                    <span class="port-traffic-val" x-text="formatBytes(members.tx)"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
         <div class="error-state" x-show="interfacesError">
           <span>Failed to load interfaces</span>
           <span class="error-message" x-text="interfacesError"></span>
@@ -516,6 +545,7 @@
       fwView: 'topology',
       fwChain: 'forward',
       wirelessInterfaces: [],
+      bridgePorts: [],
 
       // --- Loading/Error per section ---
       systemLoading: true,
@@ -630,10 +660,41 @@
         try {
           this.interfaces = await this.apiFetch('/api/interface');
           this.quickStats.interfaces = this.interfaces.length;
+          this.fetchBridgePorts();
         } catch (err) {
           this.interfacesError = err.message || 'Unable to reach API';
         }
         this.interfacesLoading = false;
+      },
+
+      async fetchBridgePorts() {
+        try { this.bridgePorts = await this.apiFetch('/api/interface/bridge/port'); }
+        catch { this.bridgePorts = []; }
+      },
+
+      get portInterfaces() {
+        return this.interfaces.filter(i => !/^bridge/i.test(i.type) && !/^bridge/i.test(i.name));
+      },
+
+      get bridgeGroups() {
+        const ifaceMap = {};
+        for (const i of this.interfaces) { ifaceMap[i.name] = i; }
+        const map = {};
+        for (const bp of this.bridgePorts) {
+          const br = bp.bridge || 'unknown';
+          if (!map[br]) map[br] = [];
+          map[br].push(bp.interface || bp['.id']);
+        }
+        return Object.entries(map).map(([bridge, members]) => {
+          const bi = ifaceMap[bridge] || {};
+          return {
+            bridge,
+            members,
+            rx: bi['rx-byte'] || '0',
+            tx: bi['tx-byte'] || '0',
+            running: bi.running === 'true' || bi.disabled === 'false'
+          };
+        });
       },
 
       // --- DHCP ---

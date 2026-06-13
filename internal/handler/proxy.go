@@ -49,6 +49,10 @@ func (h *Handler) HandleWirelessInterfaces(w http.ResponseWriter, r *http.Reques
 	h.proxy(w, "interface/wireless")
 }
 
+func (h *Handler) HandleBridgePorts(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "interface/bridge/port")
+}
+
 func (h *Handler) proxy(w http.ResponseWriter, restPath string) {
 	data, err := h.client.Get(restPath)
 	if err != nil {
