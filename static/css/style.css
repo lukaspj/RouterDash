@@ -705,6 +705,8 @@ tbody tr:last-child td {
 .fw-legend-swatch.accept { background: #22c55e; }
 .fw-legend-swatch.drop   { background: #ef4444; }
 .fw-legend-swatch.reject { background: #f59e0b; }
+.fw-legend-swatch.passthrough { background: #3b82f6; }
+.fw-legend-swatch.fasttrack   { background: #14b8a6; }
 .fw-legend-dot {
   width: 10px;
   height: 10px;
@@ -737,6 +739,8 @@ tbody tr:last-child td {
 .fw-edge.accept { stroke: #22c55e; }
 .fw-edge.drop   { stroke: #ef4444; }
 .fw-edge.reject { stroke: #f59e0b; }
+.fw-edge.passthrough { stroke: #3b82f6; }
+.fw-edge.fasttrack-connection { stroke: #14b8a6; }
 .fw-edge-group:hover .fw-edge {
   opacity: 1;
   stroke-width: 3.5;
@@ -761,7 +765,7 @@ tbody tr:last-child td {
 }
 .fw-node-text {
   fill: var(--text-muted);
-  font-size: 7px;
+  font-size: 6px;
   font-family: var(--font-mono);
   pointer-events: none;
 }
@@ -806,29 +810,35 @@ tbody tr:last-child td {
 }
 
 .cf-vline { stroke: #475569; stroke-width: 1.5; }
-.cf-nomatch { fill: #64748b; font-size: 7px; font-family: var(--font); }
-.cf-match { fill: #64748b; font-size: 6px; font-family: var(--font); text-anchor: middle; }
+.cf-nomatch { fill: #64748b; font-size: 6px; font-family: var(--font); }
+.cf-match { fill: #64748b; font-size: 5px; font-family: var(--font); text-anchor: middle; }
 
 .cf-node { fill: #1e293b; stroke-width: 1.5; }
 .cf-entry { stroke: #3b82f6; }
 .cf-default { stroke: #f59e0b; }
-.cf-node-label { fill: #e2e8f0; font-size: 9px; font-family: var(--font); font-weight: 600; }
+.cf-node-label { fill: #e2e8f0; font-size: 7px; font-family: var(--font); font-weight: 600; }
 
 .cf-rule-box { fill: #0f172a; stroke: #334155; stroke-width: 1; }
-.cf-rule-num { fill: #64748b; font-size: 7px; font-family: var(--font-mono); }
-.cf-rule-action { font-size: 7px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+.cf-rule-num { fill: #64748b; font-size: 6px; font-family: var(--font-mono); }
+.cf-rule-action { font-size: 6px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
 .cf-rule-action.cf-accept { fill: #22c55e; }
 .cf-rule-action.cf-drop { fill: #ef4444; }
 .cf-rule-action.cf-reject { fill: #f59e0b; }
-.cf-rule-cond { fill: #94a3b8; font-size: 7px; font-family: var(--font-mono); }
+.cf-rule-action.cf-passthrough { fill: #3b82f6; }
+.cf-rule-action.cf-fasttrack-connection { fill: #14b8a6; }
+.cf-rule-cond { fill: #94a3b8; font-size: 6px; font-family: var(--font-mono); }
 
 .cf-edge { stroke-width: 1.5; fill: none; }
 .cf-edge.cf-accept { stroke: #22c55e; }
 .cf-edge.cf-drop { stroke: #ef4444; }
 .cf-edge.cf-reject { stroke: #f59e0b; }
+.cf-edge.cf-passthrough { stroke: #3b82f6; }
+.cf-edge.cf-fasttrack-connection { stroke: #14b8a6; }
 
 .cf-action-pill { fill: transparent; stroke-width: 1.5; }
 .cf-action-pill.cf-accept { stroke: #22c55e; }
 .cf-action-pill.cf-drop { stroke: #ef4444; }
 .cf-action-pill.cf-reject { stroke: #f59e0b; }
-.cf-action-label { fill: #e2e8f0; font-size: 7px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+.cf-action-pill.cf-passthrough { stroke: #3b82f6; }
+.cf-action-pill.cf-fasttrack-connection { stroke: #14b8a6; }
+.cf-action-label { fill: #e2e8f0; font-size: 6px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }

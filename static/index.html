@@ -339,6 +339,8 @@
           <span class="fw-legend-item"><span class="fw-legend-swatch accept"></span> Accept</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch drop"></span> Drop</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch reject"></span> Reject</span>
+          <span class="fw-legend-item"><span class="fw-legend-swatch passthrough"></span> Passthrough</span>
+          <span class="fw-legend-item"><span class="fw-legend-swatch fasttrack"></span> FastTrack</span>
           <span x-show="fwView === 'topology'">
             <span class="fw-legend-item"><span class="fw-legend-sep">|</span></span>
             <span class="fw-legend-item"><span class="fw-legend-dot vlan"></span> VLAN</span>
@@ -732,6 +734,8 @@
         svg += '<marker id="arr-accept" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#22c55e"/></marker>';
         svg += '<marker id="arr-drop" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444"/></marker>';
         svg += '<marker id="arr-reject" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/></marker>';
+        svg += '<marker id="arr-passthrough" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/></marker>';
+        svg += '<marker id="arr-fasttrack-connection" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#14b8a6"/></marker>';
         svg += '</defs>';
         for (const e of g.edges) {
           const tip = esc(e.action.toUpperCase() + ' | ' + e.chain + ' chain\n' +
@@ -739,8 +743,8 @@
           svg += `<g class="fw-edge-group"><line x1="${e.srcX}" y1="${e.srcY}" x2="${e.dstX}" y2="${e.dstY}" class="fw-edge ${e.action}" marker-end="url(#arr-${e.action})"/><title>${tip}</title></g>`;
         }
         for (const n of g.nodes) {
-          const r = n.type === 'router' ? 16 : 12;
-          const labelY = n.type === 'router' ? n.y + 22 : n.y + 18;
+          const r = n.type === 'router' ? 12 : 9;
+          const labelY = n.type === 'router' ? n.y + 18 : n.y + 14;
           svg += `<g class="fw-node-group"><circle cx="${n.x}" cy="${n.y}" r="${r}" class="fw-node ${n.type}"/><text x="${n.x}" y="${labelY}" class="fw-node-text" text-anchor="middle">${esc(n.label)}</text></g>`;
         }
         svg += '</svg>';
@@ -761,40 +765,68 @@
         const rules = this.fwChainRules;
         if (!rules.length) return '';
         const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        const spacing = 52;
-        const h = Math.max(220, 56 + rules.length * spacing);
-        const cx = 40, aw = 240, ax = 300;
-        let svg = `<svg viewBox="0 0 420 ${h}" class="fw-svg">`;
-        svg += '<defs><marker id="cf-arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#64748b"/></marker></defs>';
+        const colW = 170, boxW = 150, boxH = 100, boxY = 30;
+        const w = 120 + rules.length * colW + 140;
+        const h = 210;
+        let svg = `<svg viewBox="0 0 ${w} ${h}" class="fw-svg">`;
+        svg += '<defs><marker id="cf-arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#64748b"/></marker>';
+        svg += '<marker id="cf-arr-accept" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#22c55e"/></marker>';
+        svg += '<marker id="cf-arr-drop" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#ef4444"/></marker>';
+        svg += '<marker id="cf-arr-reject" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#f59e0b"/></marker>';
+        svg += '<marker id="cf-arr-passthrough" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#3b82f6"/></marker>';
+        svg += '<marker id="cf-arr-fasttrack-connection" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#14b8a6"/></marker>';
+        svg += '</defs>';
         // Entry node
-        svg += `<rect x="${cx}" y="8" width="${aw}" height="20" rx="4" class="cf-node cf-entry"/><text x="${cx + aw/2}" y="21" class="cf-node-label" text-anchor="middle">${this.fwChain.toUpperCase()} CHAIN</text>`;
-        let lastY = 28;
+        const entryX = 60;
+        svg += `<rect x="${entryX - 42}" y="${boxY + boxH/2 - 9}" width="84" height="18" rx="9" class="cf-node cf-entry"/><text x="${entryX}" y="${boxY + boxH/2 + 3}" class="cf-node-label" text-anchor="middle">${this.fwChain.toUpperCase()}</text>`;
+        // Arrow from entry to first rule
+        if (rules.length) {
+          svg += `<line x1="${entryX + 42}" y1="${boxY + boxH/2}" x2="${140}" y2="${boxY + boxH/2}" class="cf-edge cf-vline" marker-end="url(#cf-arr)"/>`;
+        }
         rules.forEach((r, i) => {
-          const y = 48 + i * spacing;
+          const cx = 140 + i * colW;
+          const bx = cx, by = boxY;
           const action = r.action || 'accept';
+          const midY = by + boxH/2;
           const conds = [];
           if (r['src-address'] && r['src-address'] !== '0.0.0.0/0') conds.push('src=' + r['src-address']);
           if (r['dst-address'] && r['dst-address'] !== '0.0.0.0/0') conds.push('dst=' + r['dst-address']);
           if (r['in-interface'] && r['in-interface'] !== 'all') conds.push('in=' + r['in-interface']);
           if (r['out-interface'] && r['out-interface'] !== 'all') conds.push('out=' + r['out-interface']);
+          if (r['connection-state'] && r['connection-state'] !== 'all') conds.push('conn=' + r['connection-state']);
+          if (r.comment) conds.push('#' + r.comment);
           if (r.protocol && r.protocol !== 'all') conds.push(r.protocol);
-          const cond = esc(conds.join(' '));
-          // Arrow from previous node
-          svg += `<line x1="${cx + aw/2}" y1="${lastY}" x2="${cx + aw/2}" y2="${y + 4}" class="cf-vline"/><line x1="${cx + aw/2 - 3}" y1="${y}" x2="${cx + aw/2}" y2="${y + 4}" class="cf-vline"/><line x1="${cx + aw/2 + 3}" y1="${y}" x2="${cx + aw/2}" y2="${y + 4}" class="cf-vline"/>`;
-          // "no match" label
-          svg += `<text x="${cx + aw/2 + 7}" y="${lastY + (y - lastY)/2 + 3}" class="cf-nomatch">no match</text>`;
+          const condLines = [];
+          let cur = '';
+          conds.forEach(c => {
+            if (cur && (cur.length + c.length) > 34) { condLines.push(cur); cur = c; }
+            else cur = cur ? cur + ' ' + c : c;
+          });
+          if (cur) condLines.push(cur);
           // Rule box
-          svg += `<rect x="${cx}" y="${y}" width="${aw}" height="28" rx="3" class="cf-rule-box"/><text x="${cx + 8}" y="${y + 12}" class="cf-rule-num">#${i+1}</text><text x="${cx + 28}" y="${y + 12}" class="cf-rule-action cf-${action}">${action}</text><text x="${cx + 8}" y="${y + 23}" class="cf-rule-cond">${cond || 'any'}</text>`;
-          // Match arrow to action pill
-          svg += `<line x1="${cx + aw}" y1="${y + 14}" x2="${ax}" y2="${y + 14}" class="cf-edge cf-${action}" marker-end="url(#cf-arr)"/><text x="${cx + aw + (ax - cx - aw)/2}" y="${y + 11}" class="cf-match">match</text>`;
+          svg += `<rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="4" class="cf-rule-box"/>`;
+          svg += `<text x="${bx + 6}" y="${by + 12}" class="cf-rule-num">#${i+1} ${action}</text>`;
+          condLines.forEach((cl, li) => {
+            if (li >= 6) return;
+            svg += `<text x="${bx + 6}" y="${by + 24 + li * 11}" class="cf-rule-cond">${esc(cl.slice(0, 36))}</text>`;
+          });
+          // Match arrow down to action pill
+          svg += `<line x1="${bx + boxW/2}" y1="${by + boxH}" x2="${bx + boxW/2}" y2="${by + boxH + 26}" class="cf-edge cf-${action}" marker-end="url(#cf-arr-${action})"/>`;
+          svg += `<text x="${bx + boxW/2 + 5}" y="${by + boxH + 16}" class="cf-match">match</text>`;
           // Action pill
-          svg += `<rect x="${ax}" y="${y + 6}" width="52" height="16" rx="8" class="cf-action-pill cf-${action}"/><text x="${ax + 26}" y="${y + 17}" class="cf-action-label" text-anchor="middle">${action}</text>`;
-          lastY = y + 28;
+          svg += `<rect x="${bx + boxW/2 - 22}" y="${by + boxH + 26}" width="44" height="14" rx="7" class="cf-action-pill cf-${action}"/><text x="${bx + boxW/2}" y="${by + boxH + 36}" class="cf-action-label" text-anchor="middle">${action}</text>`;
+          // No-match arrow to next rule
+          if (i < rules.length - 1) {
+            const nbx = 140 + (i + 1) * colW;
+            svg += `<line x1="${bx + boxW}" y1="${midY}" x2="${nbx}" y2="${midY}" class="cf-vline" marker-end="url(#cf-arr)"/>`;
+            svg += `<text x="${bx + boxW + (nbx - bx - boxW)/2}" y="${midY - 4}" class="cf-nomatch" text-anchor="middle">no match</text>`;
+          }
         });
         // Default action
-        svg += `<line x1="${cx + aw/2}" y1="${lastY}" x2="${cx + aw/2}" y2="${lastY + 16}" class="cf-vline"/>`;
-        svg += `<text x="${cx + aw/2 + 7}" y="${lastY + 10}" class="cf-nomatch">no match</text>`;
-        svg += `<rect x="${cx}" y="${lastY + 16}" width="${aw}" height="20" rx="4" class="cf-node cf-default"/><text x="${cx + aw/2}" y="${lastY + 29}" class="cf-node-label" text-anchor="middle">DEFAULT: accept</text>`;
+        const defX = 140 + rules.length * colW;
+        svg += `<line x1="${140 + (rules.length - 1) * colW + boxW}" y1="${boxY + boxH/2}" x2="${defX}" y2="${boxY + boxH/2}" class="cf-vline" marker-end="url(#cf-arr)"/>`;
+        svg += `<text x="${defX - colW/2}" y="${boxY + boxH/2 - 4}" class="cf-nomatch" text-anchor="middle">no match</text>`;
+        svg += `<rect x="${defX}" y="${boxY + boxH/2 - 9}" width="102" height="18" rx="9" class="cf-node cf-default"/><text x="${defX + 51}" y="${boxY + boxH/2 + 3}" class="cf-node-label" text-anchor="middle">DEFAULT: accept</text>`;
         svg += '</svg>';
         return svg;
       },
