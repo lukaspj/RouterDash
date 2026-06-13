@@ -719,12 +719,13 @@ tbody tr:last-child td {
   overflow: auto;
   padding: 0;
   background: var(--bg-card);
+  max-height: 60vh;
 }
 .fw-svg {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 420px;
+  min-height: 200px;
 }
 
 .fw-edge {
@@ -754,13 +755,13 @@ tbody tr:last-child td {
 
 .fw-node-label {
   fill: #e2e8f0;
-  font-size: 14px;
+  font-size: 8px;
   font-family: var(--font);
   pointer-events: none;
 }
 .fw-node-text {
   fill: var(--text-muted);
-  font-size: 10px;
+  font-size: 7px;
   font-family: var(--font-mono);
   pointer-events: none;
 }
@@ -770,3 +771,64 @@ tbody tr:last-child td {
   max-height: 320px;
   overflow: auto;
 }
+
+/* ---------- Chain Flow Chart ---------- */
+.fw-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.fw-toggle-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.fw-toggle-btn:last-child { border-right: none; }
+.fw-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.fw-chain-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: 8px;
+}
+
+.cf-vline { stroke: #475569; stroke-width: 1.5; }
+.cf-nomatch { fill: #64748b; font-size: 7px; font-family: var(--font); }
+.cf-match { fill: #64748b; font-size: 6px; font-family: var(--font); text-anchor: middle; }
+
+.cf-node { fill: #1e293b; stroke-width: 1.5; }
+.cf-entry { stroke: #3b82f6; }
+.cf-default { stroke: #f59e0b; }
+.cf-node-label { fill: #e2e8f0; font-size: 9px; font-family: var(--font); font-weight: 600; }
+
+.cf-rule-box { fill: #0f172a; stroke: #334155; stroke-width: 1; }
+.cf-rule-num { fill: #64748b; font-size: 7px; font-family: var(--font-mono); }
+.cf-rule-action { font-size: 7px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+.cf-rule-action.cf-accept { fill: #22c55e; }
+.cf-rule-action.cf-drop { fill: #ef4444; }
+.cf-rule-action.cf-reject { fill: #f59e0b; }
+.cf-rule-cond { fill: #94a3b8; font-size: 7px; font-family: var(--font-mono); }
+
+.cf-edge { stroke-width: 1.5; fill: none; }
+.cf-edge.cf-accept { stroke: #22c55e; }
+.cf-edge.cf-drop { stroke: #ef4444; }
+.cf-edge.cf-reject { stroke: #f59e0b; }
+
+.cf-action-pill { fill: transparent; stroke-width: 1.5; }
+.cf-action-pill.cf-accept { stroke: #22c55e; }
+.cf-action-pill.cf-drop { stroke: #ef4444; }
+.cf-action-pill.cf-reject { stroke: #f59e0b; }
+.cf-action-label { fill: #e2e8f0; font-size: 7px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
