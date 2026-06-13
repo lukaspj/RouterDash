@@ -259,9 +259,9 @@
                 <div class="bridge-members">
                   <template x-for="m in members.members" :key="m">
                     <span class="bridge-member" x-text="m"></span>
-                  </template>
-                </div>
-                <div class="port-traffic">
+          </template>
+        </div>
+        <div class="port-traffic">
                   <div class="port-traffic-row">
                     <span class="port-traffic-label">RX</span>
                     <span class="port-traffic-val" x-text="formatBytes(members.rx)"></span>
@@ -273,6 +273,50 @@
                 </div>
               </div>
             </template>
+          </div>
+        </template>
+        <!-- Ethernet interfaces -->
+        <template x-if="ethernetInterfaces.length">
+          <div class="eth-section">
+            <div class="eth-section-title">Ethernet Ports</div>
+            <div class="eth-grid">
+              <template x-for="eth in ethernetInterfaces" :key="eth['.id']">
+                <div class="eth-card" :class="eth.running === 'true' ? 'eth-up' : 'eth-down'">
+                  <div class="eth-header">
+                    <span class="eth-name" x-text="eth.name || eth['default-name'] || eth['.id']"></span>
+                    <span class="eth-speed" x-text="eth.speed || eth['auto-negotiation'] || ''"></span>
+                  </div>
+                  <div class="eth-details">
+                    <div class="eth-row">
+                      <span class="eth-label">MAC</span>
+                      <span class="eth-val" x-text="eth['mac-address'] || '--'"></span>
+                    </div>
+                    <template x-if="eth['sfp-vendor-name']">
+                      <div class="eth-row">
+                        <span class="eth-label">SFP</span>
+                        <span class="eth-val" x-text="eth['sfp-vendor-name'] + ' ' + (eth['sfp-vendor-part-number'] || '')"></span>
+                      </div>
+                    </template>
+                    <template x-if="eth['poe-out'] && eth['poe-out'] !== 'off'">
+                      <div class="eth-row">
+                        <span class="eth-label">PoE</span>
+                        <span class="eth-val eth-poe" x-text="eth['poe-out']"></span>
+                      </div>
+                    </template>
+                    <div class="eth-traffic">
+                      <div class="eth-traffic-row">
+                        <span class="eth-traffic-label">RX</span>
+                        <span class="eth-traffic-val" x-text="formatBytes(eth['rx-byte'] || 0)"></span>
+                      </div>
+                      <div class="eth-traffic-row">
+                        <span class="eth-traffic-label">TX</span>
+                        <span class="eth-traffic-val" x-text="formatBytes(eth['tx-byte'] || 0)"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
         </template>
         <div class="error-state" x-show="interfacesError">
@@ -384,7 +428,7 @@
         <!-- Topology view -->
         <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwGraph.nodes.length && fwView === 'topology'" x-html="fwGraphSvg"></div>
         <!-- Chain flow view -->
-        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView === 'flow'" x-html="fwChainSvg"></div>
+        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView === 'flow'" x-html="fwChainFlow"></div>
         <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length && fwView === 'flow'">
           <span x-text="'No rules in ' + fwChain + ' chain'"></span>
         </div>
@@ -546,6 +590,7 @@
       fwChain: 'forward',
       wirelessInterfaces: [],
       bridgePorts: [],
+      ethernetInterfaces: [],
 
       // --- Loading/Error per section ---
       systemLoading: true,
@@ -560,6 +605,8 @@
       firewallError: '',
       wirelessLoading: true,
       wirelessError: '',
+      ethernetLoading: true,
+      ethernetError: '',
 
       // --- Init ---
       init() {
@@ -661,6 +708,7 @@
           this.interfaces = await this.apiFetch('/api/interface');
           this.quickStats.interfaces = this.interfaces.length;
           this.fetchBridgePorts();
+          this.fetchEthernet();
         } catch (err) {
           this.interfacesError = err.message || 'Unable to reach API';
         }
@@ -670,6 +718,11 @@
       async fetchBridgePorts() {
         try { this.bridgePorts = await this.apiFetch('/api/interface/bridge/port'); }
         catch { this.bridgePorts = []; }
+      },
+
+      async fetchEthernet() {
+        try { this.ethernetInterfaces = await this.apiFetch('/api/interface/ethernet'); }
+        catch { this.ethernetInterfaces = []; }
       },
 
       get portInterfaces() {
@@ -829,7 +882,7 @@
         return this.firewallRules.filter(r => (r.chain || 'forward') === this.fwChain);
       },
 
-      get fwChainSvg() {
+      get fwChainFlow() {
         const rules = this.fwChainRules;
         if (!rules.length) return '';
         const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -848,26 +901,9 @@
           if (v >= 1e3) return (v/1e3).toFixed(1)+'K';
           return v.toString();
         };
-        const spacing = 68, boxW = 280, boxH = 44, left = 20, pillGap = 30;
-        const pillX = left + boxW + pillGap;
-        const h = 30 + rules.length * spacing + 40;
-        const w = pillX + 70;
-        let svg = `<svg viewBox="0 0 ${w} ${h}" class="fw-svg">`;
-        svg += '<defs>'
-          + '<marker id="cf-a" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#64748b"/></marker>'
-          + '<marker id="cf-ma" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#22c55e"/></marker>'
-          + '<marker id="cf-md" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#ef4444"/></marker>'
-          + '<marker id="cf-mr" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#f59e0b"/></marker>'
-          + '<marker id="cf-mp" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#3b82f6"/></marker>'
-          + '<marker id="cf-mf" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#14b8a6"/></marker>'
-          + '</defs>';
-        // Entry
-        const cx = left + boxW/2;
-        svg += `<rect x="${cx - 40}" y="6" width="80" height="14" rx="7" class="cf-node cf-entry"/><text x="${cx}" y="15" class="cf-node-label" text-anchor="middle">${esc(this.fwChain.toUpperCase())} CHAIN</text>`;
-        let lastY = 20;
-        const markerMap = {accept:'cf-ma',drop:'cf-md',reject:'cf-mr',passthrough:'cf-mp','fasttrack-connection':'cf-mf'};
+        let html = '<div class="cf-flow">';
+        html += `<div class="cf-entry">${esc(this.fwChain.toUpperCase())} CHAIN</div>`;
         rules.forEach((r, i) => {
-          const y = 30 + i * spacing;
           const action = r.action || 'accept';
           const traffic = esc(fmtBytes(r.bytes) + ' / ' + fmtNum(r.packets) + ' pkts');
           const badges = [];
@@ -878,38 +914,27 @@
           if (r['connection-state'] && r['connection-state'] !== 'all') badges.push({t:'state',v:esc(r['connection-state']),c:'b-state'});
           if (r.protocol && r.protocol !== 'all') badges.push({t:esc(r.protocol),v:'',c:'b-proto'});
           const comment = r.comment ? esc(r.comment) : '';
-          const marker = markerMap[action] || 'cf-ma';
-          // Down arrow from previous
-          svg += `<line x1="${cx}" y1="${lastY}" x2="${cx}" y2="${y + 4}" class="cf-vline"/><line x1="${cx-4}" y1="${y}" x2="${cx}" y2="${y+4}" class="cf-vline"/><line x1="${cx+4}" y1="${y}" x2="${cx}" y2="${y+4}" class="cf-vline"/>`;
-          // Rule box
-          svg += `<rect x="${left}" y="${y}" width="${boxW}" height="${boxH}" rx="4" class="cf-rule-box"/>`;
-          svg += `<text x="${left + 6}" y="${y + 10}" class="cf-rule-num">#${i+1} ${action}</text>`;
-          svg += `<text x="${left + boxW - 6}" y="${y + 10}" class="cf-traffic" text-anchor="end">${traffic}</text>`;
-          // Badges row
+          html += '<div class="cf-arrow-down"></div>';
+          html += '<div class="cf-rule-row">';
+          html += `<div class="cf-rule-card cf-${action}">`;
+          html += `<div class="cf-rule-header"><span class="cf-rule-num">#${i+1}</span> <span class="cf-rule-action cf-${action}">${action}</span><span class="cf-traffic">${traffic}</span></div>`;
           if (badges.length || comment) {
-            let bx = left + 6, by = y + 22;
-            badges.forEach(b => {
-              const text = b.v ? b.t + ' ' + b.v : b.t;
-              const bw = text.length * 3.5 + 10;
-              svg += `<rect x="${bx}" y="${by - 7}" width="${bw}" height="10" rx="5" class="cf-badge ${b.c}"/>`;
-              svg += `<text x="${bx + 6}" y="${by}" class="cf-badge-text">${text}</text>`;
-              bx += bw + 4;
-            });
-            if (comment) svg += `<text x="${left + 6}" y="${y + 38}" class="cf-comment">\u25b8 ${comment}</text>`;
+            if (badges.length) {
+              html += '<div class="cf-badges">';
+              badges.forEach(b => {
+                html += `<span class="cf-badge ${b.c}">${b.v ? b.t + ' ' + b.v : b.t}</span>`;
+              });
+              html += '</div>';
+            }
+            if (comment) html += `<div class="cf-comment">\u25b8 ${comment}</div>`;
           }
-          // Match arrow
-          const my = y + boxH/2;
-          svg += `<line x1="${left + boxW}" y1="${my}" x2="${pillX}" y2="${my}" class="cf-edge cf-${action}" marker-end="url(#${marker})"/>`;
-          svg += `<text x="${left + boxW + pillGap/2}" y="${my - 4}" class="cf-match" text-anchor="middle">match</text>`;
-          // Action pill
-          svg += `<rect x="${pillX}" y="${my - 7}" width="44" height="14" rx="7" class="cf-action-pill cf-${action}"/><text x="${pillX + 22}" y="${my + 2}" class="cf-action-label" text-anchor="middle">${action}</text>`;
-          lastY = y + boxH;
+          html += '</div>';
+          html += '</div>';
         });
-        // Default
-        svg += `<line x1="${cx}" y1="${lastY}" x2="${cx}" y2="${lastY + 16}" class="cf-vline"/>`;
-        svg += `<rect x="${cx - 42}" y="${lastY + 16}" width="84" height="14" rx="7" class="cf-node cf-default"/><text x="${cx}" y="${lastY + 25}" class="cf-node-label" text-anchor="middle">DEFAULT: accept</text>`;
-        svg += '</svg>';
-        return svg;
+        html += '<div class="cf-arrow-down"></div>';
+        html += '<div class="cf-default">DEFAULT: accept</div>';
+        html += '</div>';
+        return html;
       },
 
       // --- Wireless ---

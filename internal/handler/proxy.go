@@ -53,6 +53,10 @@ func (h *Handler) HandleBridgePorts(w http.ResponseWriter, r *http.Request) {
 	h.proxy(w, "interface/bridge/port")
 }
 
+func (h *Handler) HandleEthernetInterfaces(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "interface/ethernet")
+}
+
 func (h *Handler) proxy(w http.ResponseWriter, restPath string) {
 	data, err := h.client.Get(restPath)
 	if err != nil {

@@ -41,6 +41,7 @@ func main() {
 			"/api/ip/firewall/filter":    h.HandleFirewallFilter,
 			"/api/interface/wireless":    h.HandleWirelessInterfaces,
 			"/api/interface/bridge/port": h.HandleBridgePorts,
+			"/api/interface/ethernet":   h.HandleEthernetInterfaces,
 		},
 	}
 

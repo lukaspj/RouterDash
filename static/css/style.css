@@ -812,49 +812,80 @@ tbody tr:last-child td {
   margin-left: 8px;
 }
 
-.cf-vline { stroke: #475569; stroke-width: 1.5; }
-.cf-nomatch { fill: #64748b; font-size: 5px; font-family: var(--font); }
-.cf-match { fill: #64748b; font-size: 5px; font-family: var(--font); text-anchor: middle; }
+/* Flow container */
+.cf-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 10px 12px;
+}
 
-.cf-node { fill: #1e293b; stroke-width: 1.5; }
-.cf-entry { stroke: #3b82f6; }
-.cf-default { stroke: #f59e0b; }
-.cf-node-label { fill: #e2e8f0; font-size: 5px; font-family: var(--font); font-weight: 600; }
+/* Entry / Default pills */
+.cf-entry,
+.cf-default {
+  padding: 3px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  color: #64748b;
+  white-space: nowrap;
+}
 
-.cf-rule-box { fill: #0f172a; stroke: #334155; stroke-width: 1; }
-.cf-rule-num { fill: #64748b; font-size: 5px; font-family: var(--font-mono); }
-.cf-rule-action { font-size: 5px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
-.cf-rule-action.cf-accept { fill: #22c55e; }
-.cf-rule-action.cf-drop { fill: #ef4444; }
-.cf-rule-action.cf-reject { fill: #f59e0b; }
-.cf-rule-action.cf-passthrough { fill: #3b82f6; }
-.cf-rule-action.cf-fasttrack-connection { fill: #14b8a6; }
-.cf-rule-cond { fill: #94a3b8; font-size: 5px; font-family: var(--font-mono); }
-.cf-traffic { fill: #64748b; font-size: 5px; font-family: var(--font-mono); }
-.cf-comment { fill: #fbbf24; font-size: 5px; font-family: var(--font); font-style: italic; }
-.cf-badge { stroke-width: 1; }
-.cf-badge.b-src   { fill: #1d4ed8; stroke: #3b82f6; }
-.cf-badge.b-dst   { fill: #7c3aed; stroke: #a855f7; }
-.cf-badge.b-in    { fill: #0891b2; stroke: #06b6d4; }
-.cf-badge.b-out   { fill: #ea580c; stroke: #f97316; }
-.cf-badge.b-state { fill: #d97706; stroke: #f59e0b; }
-.cf-badge.b-proto { fill: #475569; stroke: #64748b; }
-.cf-badge-text { fill: #fff; font-size: 4.5px; font-family: var(--font-mono); font-weight: 500; }
+.cf-rule-action {
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.cf-rule-action.cf-accept              { color: #22c55e; }
+.cf-rule-action.cf-drop                { color: #ef4444; }
+.cf-rule-action.cf-reject              { color: #f59e0b; }
+.cf-rule-action.cf-passthrough         { color: #3b82f6; }
+.cf-rule-action.cf-fasttrack-connection { color: #14b8a6; }
 
-.cf-edge { stroke-width: 1.5; fill: none; }
-.cf-edge.cf-accept { stroke: #22c55e; }
-.cf-edge.cf-drop { stroke: #ef4444; }
-.cf-edge.cf-reject { stroke: #f59e0b; }
-.cf-edge.cf-passthrough { stroke: #3b82f6; }
-.cf-edge.cf-fasttrack-connection { stroke: #14b8a6; }
+.cf-traffic {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #64748b;
+  margin-left: auto;
+  white-space: nowrap;
+}
 
-.cf-action-pill { fill: transparent; stroke-width: 1.5; }
-.cf-action-pill.cf-accept { stroke: #22c55e; }
-.cf-action-pill.cf-drop { stroke: #ef4444; }
-.cf-action-pill.cf-reject { stroke: #f59e0b; }
-.cf-action-pill.cf-passthrough { stroke: #3b82f6; }
-.cf-action-pill.cf-fasttrack-connection { stroke: #14b8a6; }
-.cf-action-label { fill: #e2e8f0; font-size: 5px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+/* Badges */
+.cf-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.cf-badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid;
+  line-height: 1.4;
+}
+.cf-badge.b-src   { background: #1d4ed8; border-color: #3b82f6; }
+.cf-badge.b-dst   { background: #7c3aed; border-color: #a855f7; }
+.cf-badge.b-in    { background: #0891b2; border-color: #06b6d4; }
+.cf-badge.b-out   { background: #ea580c; border-color: #f97316; }
+.cf-badge.b-state { background: #d97706; border-color: #f59e0b; }
+.cf-badge.b-proto { background: #475569; border-color: #64748b; }
+
+/* Comment */
+.cf-comment {
+  font-size: 11px;
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: #fbbf24;
+  margin-top: 3px;
+}
 
 /* ---------- Port Grid ---------- */
 .port-grid {
@@ -974,3 +1005,84 @@ tbody tr:last-child td {
 }
 .bridge-group.bg-up   { border-color: #a855f7; }
 .bridge-group.bg-down { border-color: #374151; }
+
+/* ---------- Ethernet Ports ---------- */
+.eth-section {
+  padding: 0 16px 16px;
+}
+.eth-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 8px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.eth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.eth-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.eth-card.eth-up   { border-color: #22c55e44; }
+.eth-card.eth-down { border-color: #374151; opacity: 0.7; }
+.eth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.eth-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+}
+.eth-speed {
+  font-size: 10px;
+  font-weight: 600;
+  color: #22c55e;
+  font-family: var(--font-mono);
+  background: #22c55e18;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.eth-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.eth-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.eth-label {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.eth-val {
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+.eth-poe {
+  color: #f59e0b;
+  font-weight: 600;
+}
+.eth-traffic {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 10px;
+}
+.eth-traffic-row {
+  display: flex;
+  gap: 4px;
+}
+.eth-traffic-label { color: var(--text-muted); }
+.eth-traffic-val   { color: #94a3b8; font-family: var(--font-mono); }
