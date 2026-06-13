@@ -529,6 +529,8 @@
 
       // --- Init ---
       init() {
+        const saved = localStorage.getItem('mikrodash-tab');
+        if (saved && this.tabs.some(t => t.id === saved)) this.activeTab = saved;
         this.refreshAll();
         this._interval = setInterval(() => { this.refreshAll(); }, 30000);
       },
@@ -536,6 +538,7 @@
       // --- Tab switching ---
       switchTab(tabId) {
         this.activeTab = tabId;
+        localStorage.setItem('mikrodash-tab', tabId);
       },
 
       // --- Refresh all data ---
