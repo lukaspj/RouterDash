@@ -443,25 +443,12 @@
     <section class="section" :class="{ active: activeTab === 'firewall' }" x-show="activeTab === 'firewall'">
       <div class="card">
         <div class="card-header">
-          <span class="card-title">
-            Firewall
-            <span x-show="fwView === 'topology'">Topology</span>
-            <span x-show="fwView === 'flow'">Chain Flow</span>
-          </span>
+          <span class="card-title">Firewall</span>
           <span class="text-muted" style="font-size:12px" x-show="firewallRules.length">
             <span x-text="firewallRules.length"></span> rules
-            <span x-show="fwView === 'topology'">
-              &middot; <span x-text="fwGraph.nodes.length"></span> zones
-              &middot; <span x-text="fwGraph.edges.length"></span> flows
-            </span>
           </span>
         </div>
-        <!-- View toggle -->
         <div class="fw-legend">
-          <div class="fw-toggle">
-            <button :class="'fw-toggle-btn ' + (fwView === 'topology' ? 'active' : '')" @click="fwView = 'topology'">Topology</button>
-            <button :class="'fw-toggle-btn ' + (fwView === 'flow' ? 'active' : '')" @click="fwView = 'flow'">Chain Flow</button>
-          </div>
           <div class="fw-chain-tabs">
             <template x-for="ch in fwChains" :key="ch">
               <button :class="'fw-toggle-btn ' + (fwChain === ch ? 'active' : '')" @click="fwChain = ch" x-text="ch"></button>
@@ -472,25 +459,14 @@
           <span class="fw-legend-item"><span class="fw-legend-swatch reject"></span> Reject</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch passthrough"></span> Passthrough</span>
           <span class="fw-legend-item"><span class="fw-legend-swatch fasttrack"></span> FastTrack</span>
-          <span x-show="fwView === 'topology'">
-            <span class="fw-legend-item"><span class="fw-legend-sep">|</span></span>
-            <span class="fw-legend-item"><span class="fw-legend-dot vlan"></span> VLAN</span>
-            <span class="fw-legend-item"><span class="fw-legend-dot iface"></span> Interface</span>
-            <span class="fw-legend-item"><span class="fw-legend-dot net"></span> Network</span>
-          </span>
         </div>
-        <!-- Topology view -->
-        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwGraph.nodes.length && fwView === 'topology'" x-html="fwGraphSvg"></div>
         <!-- Chain flow view -->
-        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView === 'flow'" x-html="fwChainFlow"></div>
-        <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length && fwView !== 'flow'">
-          <span x-text="'No rules in ' + fwChain + ' chain'"></span>
-        </div>
-        <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length && fwView === 'flow'">
+        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length" x-html="fwChainFlow"></div>
+        <div class="empty-state" x-show="!firewallLoading && !firewallError && !fwChainRules.length">
           <span x-text="'No rules in ' + fwChain + ' chain'"></span>
         </div>
         <!-- Rule table -->
-        <div class="fw-table-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length && fwView !== 'flow'">
+        <div class="fw-table-wrap" x-show="!firewallLoading && !firewallError && fwChainRules.length">
           <table>
             <thead>
               <tr>
@@ -595,6 +571,188 @@
       </div>
     </section>
 
+    <!------------------------ Diagnostics Section ------------------------>
+    <section class="section" :class="{ active: activeTab === 'diagnostics' }" x-show="activeTab === 'diagnostics'">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CPU Profile</span>
+          <span class="text-muted" style="font-size:12px" x-show="diagnostics.profile.length">
+            <span x-text="diagnostics.profile.length"></span> processes
+          </span>
+        </div>
+        <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
+          <!-- tool/profile data -->
+          <template x-if="diagnostics.profile.length">
+            <div class="diag-profile-grid">
+              <template x-for="p in diagnostics.profile" :key="p['.id'] || p.name">
+                <div class="diag-profile-item">
+                  <div class="diag-profile-header">
+                    <span class="diag-profile-name" x-text="p.name || p['.id']"></span>
+                    <span class="diag-profile-cpu" x-text="(p.cpu || 0) + '%'"></span>
+                  </div>
+                  <div class="diag-profile-bar-track">
+                    <div class="diag-profile-bar-fill" :class="(parseFloat(p.cpu) || 0) > 50 ? 'diag-cpu-high' : (parseFloat(p.cpu) || 0) > 20 ? 'diag-cpu-mid' : ''" :style="{ width: (p.cpu || 0) + '%' }"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <!-- Per-core CPU fallback -->
+          <template x-if="!diagnostics.profile.length && diagnostics.cpuCores.length">
+            <div class="diag-profile-grid">
+              <template x-for="(core, idx) in diagnostics.cpuCores" :key="core['.id'] || idx">
+                <div class="diag-profile-item">
+                  <div class="diag-profile-header">
+                    <span class="diag-profile-name" x-text="'Core ' + (core['cpu-number'] || core.cpu || idx)"></span>
+                    <span class="diag-profile-cpu" x-text="(core.load || core['cpu-load'] || 0) + '%'"></span>
+                  </div>
+                  <div class="diag-profile-bar-track">
+                    <div class="diag-profile-bar-fill" :class="(parseFloat(core.load || core['cpu-load']) || 0) > 50 ? 'diag-cpu-high' : (parseFloat(core.load || core['cpu-load']) || 0) > 20 ? 'diag-cpu-mid' : ''" :style="{ width: (core.load || core['cpu-load'] || 0) + '%' }"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <!-- No CPU profiling available -->
+          <template x-if="!diagnostics.profile.length && !diagnostics.cpuCores.length">
+            <div class="diag-empty-hint">CPU profiling not available on this device</div>
+          </template>
+        </div>
+        <div class="loading-state" x-show="diagnosticsLoading">
+          <div class="loading-spinner"></div>
+          <span>Loading diagnostics...</span>
+        </div>
+        <div class="error-state" x-show="diagnosticsError">
+          <span>Failed to load diagnostics</span>
+          <span class="error-message" x-text="diagnosticsError"></span>
+          <button class="btn btn-sm retry-btn" @click="fetchDiagnostics()">Retry</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Connection Tracking -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Connection Tracking</span>
+          </div>
+          <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
+            <div class="diag-stat-big">
+              <span class="diag-stat-value" x-text="diagnostics.connections.length || 0"></span>
+              <span class="diag-stat-label">tracked connections</span>
+            </div>
+            <!-- Connection state breakdown -->
+              <div class="diag-states" x-show="Object.keys(diagnostics.connStates).length">
+              <template x-for="(count, state) in diagnostics.connStates" :key="state">
+                <div class="diag-state-row">
+                  <span class="diag-state-label" x-text="state"></span>
+                  <span class="diag-state-count" x-text="count"></span>
+                </div>
+              </template>
+            </div>
+            <!-- Protocol breakdown -->
+            <div class="diag-states" x-show="Object.keys(diagnostics.connProto).length">
+              <label class="diag-section-label">By protocol</label>
+              <template x-for="(count, proto) in diagnostics.connProto" :key="proto">
+                <div class="diag-state-row">
+                  <span class="diag-state-label" x-text="proto.toUpperCase()"></span>
+                  <span class="diag-state-count" x-text="count"></span>
+                </div>
+              </template>
+            </div>
+            <!-- Tracking saturation -->
+            <div class="diag-states" x-show="diagnostics.tracking['max-entries']">
+              <label class="diag-section-label">Table saturation</label>
+              <div class="diag-sat-bar-track">
+                <div class="diag-sat-bar-fill" :class="(diagnostics.connections.length / diagnostics.tracking['max-entries'] * 100) > 80 ? 'diag-cpu-high' : ''" :style="{ width: (diagnostics.connections.length / diagnostics.tracking['max-entries'] * 100) + '%' }"></div>
+              </div>
+              <div class="diag-state-row">
+                <span class="diag-state-label">active / max</span>
+                <span class="diag-state-count" x-text="diagnostics.connections.length + ' / ' + diagnostics.tracking['max-entries']"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Talkers -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Top Talkers (Source IPs)</span>
+          </div>
+          <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
+            <template x-if="diagnostics.topTalkers.length">
+              <div class="diag-talkers">
+                <template x-for="t in diagnostics.topTalkers" :key="t.ip">
+                  <div class="diag-talker-card">
+                    <div class="diag-talker-head">
+                      <span class="diag-talker-ip" x-text="t.ip"></span>
+                      <span class="diag-talker-stats">
+                        <span class="diag-talker-conns" x-text="t.count + ' conns'"></span>
+                        <span class="diag-talker-bytes" x-text="formatBytes(t.bytes)"></span>
+                      </span>
+                    </div>
+                    <div class="diag-talker-ports" x-show="t.ports.length">
+                      <template x-for="port in t.ports" :key="port">
+                        <span class="diag-port-badge" x-text="port"></span>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template x-if="!diagnostics.topTalkers.length">
+              <div class="diag-empty-hint">No connection data available</div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Top Firewall Rules -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Top Rules by Traffic</span>
+          </div>
+          <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
+            <template x-if="diagnostics.topRules.length">
+              <div class="diag-top-rules">
+                <template x-for="(r, idx) in diagnostics.topRules" :key="r['.id'] || idx">
+                  <div class="diag-top-rule">
+                    <div class="diag-top-rule-head">
+                      <span class="diag-top-rule-idx" x-text="idx + 1"></span>
+                      <span class="diag-top-rule-chain" x-text="r.chain || '--'"></span>
+                      <span class="diag-top-rule-action" :class="'diag-act-' + (r.action || 'accept')" x-text="r.action || 'accept'"></span>
+                      <span class="diag-top-rule-bytes" x-text="formatBytes(r.bytes || 0)"></span>
+                    </div>
+                    <div class="diag-top-rule-desc" x-text="(r['src-address'] || 'any') + ' → ' + (r['dst-address'] || 'any') + (r.protocol ? ' (' + r.protocol + ')' : '')"></div>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template x-if="!diagnostics.topRules.length">
+              <div class="diag-empty-hint">No traffic data available</div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Interface Throughput -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Total Interface Throughput</span>
+          </div>
+          <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
+            <div class="diag-traffic">
+              <div class="diag-traffic-row">
+                <span class="diag-traffic-dir diag-rx">RX</span>
+                <span class="diag-traffic-val" x-text="formatBytes(diagnostics.totalRx || 0)"></span>
+              </div>
+              <div class="diag-traffic-row">
+                <span class="diag-traffic-dir diag-tx">TX</span>
+                <span class="diag-traffic-val" x-text="formatBytes(diagnostics.totalTx || 0)"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Refresh status bar -->
@@ -628,6 +786,7 @@
         { id: 'dhcp', label: 'DHCP' },
         { id: 'firewall', label: 'Firewall' },
         { id: 'wireless', label: 'Wireless' },
+        { id: 'diagnostics', label: 'Diagnostics' },
       ],
       refreshing: false,
       connected: false,
@@ -642,10 +801,9 @@
       hardware: {},
       quickStats: { interfaces: 0, addresses: 0, dhcpLeases: 0, firewallRules: 0 },
       interfaces: [],
+      ipAddresses: [],
       dhcpLeases: [],
       firewallRules: [],
-      fwGraph: { nodes: [], edges: [] },
-      fwView: 'topology',
       fwChain: 'forward',
       wirelessInterfaces: [],
       bridgePorts: [],
@@ -668,6 +826,9 @@
       ethernetError: '',
       hardwareLoading: true,
       hardwareError: '',
+      diagnosticsLoading: true,
+      diagnosticsError: '',
+      diagnostics: { profile: [], connections: [], cpuCores: [], topRules: [], connStates: {}, connProto: {}, topTalkers: [], tracking: {} },
 
       // --- Init ---
       init() {
@@ -698,6 +859,8 @@
             this.fetchFirewall(),
             this.fetchWireless(),
             this.fetchHardware(),
+            this.fetchAddresses(),
+            this.fetchDiagnostics(),
           ]);
           this.connected = true;
           this.lastRefresh = new Date().toLocaleTimeString();
@@ -761,6 +924,13 @@
           if (!hasData) { this.resourcesError = err.message || 'Unable to reach API'; }
         }
         if (!hasData) { this.resourcesLoading = false; }
+      },
+
+      // --- IP Addresses ---
+      async fetchAddresses() {
+        try { this.ipAddresses = await this.apiFetch('/api/ip/address'); }
+        catch { this.ipAddresses = []; }
+        this.quickStats.addresses = this.ipAddresses.length;
       },
 
       // --- Hardware ---
@@ -892,106 +1062,10 @@
           ]);
           this.firewallRules = [...filter, ...nat, ...mangle, ...raw];
           this.quickStats.firewallRules = this.firewallRules.length;
-          this.buildFirewallGraph();
         } catch (err) {
           if (!hasData) { this.firewallError = err.message || 'Unable to reach API'; }
         }
         if (!hasData) { this.firewallLoading = false; }
-      },
-
-      buildFirewallGraph() {
-        const rules = this.firewallRules;
-        const interfaces = new Set();
-        const networks = new Set();
-
-        for (const r of rules) {
-          if (r['in-interface'] && r['in-interface'] !== 'all') interfaces.add(r['in-interface']);
-          if (r['out-interface'] && r['out-interface'] !== 'all') interfaces.add(r['out-interface']);
-          const src = r['src-address'];
-          const dst = r['dst-address'];
-          if (src && src !== '0.0.0.0/0' && src.includes('/')) networks.add(src);
-          if (dst && dst !== '0.0.0.0/0' && dst.includes('/')) networks.add(dst);
-        }
-
-        const nodes = [];
-        nodes.push({ id: 'router', label: this.identity || 'Router', type: 'router', x: 200, y: 150 });
-
-        const cx = 200, cy = 150, ifaceR = 70, netR = 130;
-        const ifaceArr = [...interfaces];
-        ifaceArr.forEach((name, i) => {
-          const a = (i / ifaceArr.length) * 2 * Math.PI - Math.PI / 2;
-          const isVlan = /^vlan\d+$/i.test(name) || name.toLowerCase().includes('vlan');
-          nodes.push({ id: 'iface:' + name, label: name, type: isVlan ? 'vlan' : 'interface', x: cx + ifaceR * Math.cos(a), y: cy + ifaceR * Math.sin(a) });
-        });
-
-        const netArr = [...networks];
-        netArr.forEach((net, i) => {
-          const a = (i / netArr.length) * 2 * Math.PI - Math.PI / 2;
-          nodes.push({ id: 'net:' + net, label: net, type: 'network', x: cx + netR * Math.cos(a), y: cy + netR * Math.sin(a) });
-        });
-
-        const nodeMap = {};
-        nodes.forEach(n => { nodeMap[n.id] = n; });
-
-        const edgeMap = new Map();
-        for (const r of rules) {
-          const srcI = r['in-interface'];
-          const dstI = r['out-interface'];
-          const srcN = r['src-address'];
-          const dstN = r['dst-address'];
-
-          let srcId = 'router', dstId = 'router';
-          if (srcI && srcI !== 'all') srcId = 'iface:' + srcI;
-          else if (srcN && srcN !== '0.0.0.0/0' && srcN.includes('/')) srcId = 'net:' + srcN;
-          if (dstI && dstI !== 'all') dstId = 'iface:' + dstI;
-          else if (dstN && dstN !== '0.0.0.0/0' && dstN.includes('/')) dstId = 'net:' + dstN;
-          if (srcId === dstId) continue;
-
-          const srcN2 = nodeMap[srcId], dstN2 = nodeMap[dstId];
-          if (!srcN2 || !dstN2) continue;
-
-          const key = srcId + '|' + dstId + '|' + (r.action || 'accept');
-          if (edgeMap.has(key)) {
-            edgeMap.get(key).rules.push(r);
-          } else {
-            edgeMap.set(key, {
-              id: key,
-              from: srcId, to: dstId,
-              action: r.action || 'accept',
-              chain: r.chain || 'forward',
-              srcX: srcN2.x, srcY: srcN2.y,
-              dstX: dstN2.x, dstY: dstN2.y,
-              rules: [r],
-            });
-          }
-        }
-        this.fwGraph = { nodes, edges: [...edgeMap.values()] };
-      },
-
-      get fwGraphSvg() {
-        const g = this.fwGraph;
-        if (!g.nodes.length) return '';
-        const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        let svg = '<svg viewBox="0 0 400 300" class="fw-svg">';
-        svg += '<defs>';
-        svg += '<marker id="arr-accept" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#22c55e"/></marker>';
-        svg += '<marker id="arr-drop" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444"/></marker>';
-        svg += '<marker id="arr-reject" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/></marker>';
-        svg += '<marker id="arr-passthrough" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/></marker>';
-        svg += '<marker id="arr-fasttrack-connection" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#14b8a6"/></marker>';
-        svg += '</defs>';
-        for (const e of g.edges) {
-          const tip = esc(e.action.toUpperCase() + ' | ' + e.chain + ' chain\n' +
-            e.rules.map(r => (r['src-address']||'any') + ' → ' + (r['dst-address']||'any') + (r.protocol ? ' (' + r.protocol + ')' : '')).join('\n'));
-          svg += `<g class="fw-edge-group"><line x1="${e.srcX}" y1="${e.srcY}" x2="${e.dstX}" y2="${e.dstY}" class="fw-edge ${e.action}" marker-end="url(#arr-${e.action})"/><title>${tip}</title></g>`;
-        }
-        for (const n of g.nodes) {
-          const r = n.type === 'router' ? 12 : 9;
-          const labelY = n.type === 'router' ? n.y + 18 : n.y + 14;
-          svg += `<g class="fw-node-group"><circle cx="${n.x}" cy="${n.y}" r="${r}" class="fw-node ${n.type}"/><text x="${n.x}" y="${labelY}" class="fw-node-text" text-anchor="middle">${esc(n.label)}</text></g>`;
-        }
-        svg += '</svg>';
-        return svg;
       },
 
       get fwChains() {
@@ -1069,6 +1143,65 @@
           if (!hasData) { this.wirelessError = err.message || 'Unable to reach API'; }
         }
         if (!hasData) { this.wirelessLoading = false; }
+      },
+
+      // --- Diagnostics ---
+      async fetchDiagnostics() {
+        const hasData = this.diagnostics.profile.length > 0;
+        if (!hasData) { this.diagnosticsLoading = true; this.diagnosticsError = ''; }
+        try {
+          const [profile, conns, cpu, tracking] = await Promise.all([
+            this.apiFetch('/api/tool/profile').catch(() => []),
+            this.apiFetch('/api/ip/firewall/connection').catch(() => []),
+            this.apiFetch('/api/system/resource/cpu').catch(() => []),
+            this.apiFetch('/api/ip/firewall/connection/tracking').catch(() => ({})),
+          ]);
+          const topRules = [...this.firewallRules]
+            .filter(r => parseInt(r.bytes || 0) > 0)
+            .sort((a, b) => parseInt(b.bytes || 0) - parseInt(a.bytes || 0))
+            .slice(0, 10);
+          const states = {};
+          const proto = {};
+          const talkers = {};
+          for (const c of conns) {
+            const s = c['tcp-state'] || c.state || 'unknown';
+            states[s] = (states[s] || 0) + 1;
+            const p = c.protocol || 'tcp';
+            proto[p] = (proto[p] || 0) + 1;
+            const src = c['src-address'] || c['orig-src-address'];
+            if (src) {
+              if (!talkers[src]) talkers[src] = { count: 0, bytes: 0, ports: new Set() };
+              talkers[src].count++;
+              talkers[src].bytes += parseInt(c.bytes || c['orig-bytes'] || 0) || 0;
+              const port = c['src-port'] || c['orig-src-port'] || c['dst-port'] || c['orig-dst-port'];
+              if (port) talkers[src].ports.add(port);
+            }
+          }
+          const topTalkers = Object.entries(talkers)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 8)
+            .map(([ip, t]) => ({
+              ip,
+              count: t.count,
+              bytes: t.bytes,
+              ports: [...t.ports].slice(0, 5),
+            }));
+          this.diagnostics = {
+            profile: Array.isArray(profile) ? profile : [],
+            connections: Array.isArray(conns) ? conns : [],
+            cpuCores: Array.isArray(cpu) ? cpu : [],
+            topRules,
+            connStates: states,
+            connProto: proto,
+            topTalkers,
+            tracking: tracking || {},
+            totalRx: this.interfaces.reduce((s, i) => s + parseInt(i['rx-byte'] || 0), 0),
+            totalTx: this.interfaces.reduce((s, i) => s + parseInt(i['tx-byte'] || 0), 0),
+          };
+        } catch (err) {
+          if (!hasData) { this.diagnosticsError = err.message || 'Unable to reach API'; }
+        }
+        if (!hasData) { this.diagnosticsLoading = false; }
       },
 
       // --- Utility ---

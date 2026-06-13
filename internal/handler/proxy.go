@@ -57,6 +57,22 @@ func (h *Handler) HandleFirewallRaw(w http.ResponseWriter, r *http.Request) {
 	h.proxy(w, "ip/firewall/raw")
 }
 
+func (h *Handler) HandleFirewallConnections(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "ip/firewall/connection")
+}
+
+func (h *Handler) HandleConnectionTracking(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "ip/firewall/connection/tracking")
+}
+
+func (h *Handler) HandleToolProfile(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "tool/profile")
+}
+
+func (h *Handler) HandleSystemResourceCPU(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "system/resource/cpu")
+}
+
 func (h *Handler) HandleWirelessInterfaces(w http.ResponseWriter, r *http.Request) {
 	h.proxy(w, "interface/wireless")
 }
@@ -80,11 +96,11 @@ func (h *Handler) HandleSystemRouterboard(w http.ResponseWriter, r *http.Request
 func (h *Handler) proxy(w http.ResponseWriter, restPath string) {
 	data, err := h.client.Get(restPath)
 	if err != nil {
-		log.Printf("proxy error [%s]: %v", restPath, err)
 		if strings.Contains(err.Error(), "no such command") || strings.Contains(err.Error(), "no such item") {
 			writeJSON(w, http.StatusOK, []byte("[]"))
 			return
 		}
+		log.Printf("proxy error [%s]: %v", restPath, err)
 		writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}

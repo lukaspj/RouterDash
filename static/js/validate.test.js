@@ -25,6 +25,7 @@ describe("embedded JavaScript", () => {
     const fns = [
       "fetchSystem", "fetchResources", "fetchHardware",
       "fetchInterfaces", "fetchDhcp", "fetchFirewall", "fetchWireless",
+      "fetchDiagnostics",
     ];
     for (const fn of fns) {
       expect(jsSource).toMatch(new RegExp(`async ${fn}\\(\\)`));
@@ -42,6 +43,7 @@ describe("embedded JavaScript", () => {
       "dhcpLoading", "dhcpError",
       "wirelessLoading", "wirelessError",
       "hardwareLoading", "hardwareError",
+      "diagnostics", "diagnosticsLoading", "diagnosticsError",
       "resourcesLoading", "resourcesError",
       "systemLoading", "systemError",
     ];

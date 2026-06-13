@@ -779,51 +779,6 @@ tbody tr:last-child td {
   max-width: 100%;
   height: auto;
 }
-.fw-svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-.fw-edge {
-  stroke-width: 2;
-  fill: none;
-  opacity: 0.6;
-  transition: opacity 0.15s, stroke-width 0.15s;
-}
-.fw-edge.accept { stroke: #22c55e; }
-.fw-edge.drop   { stroke: #ef4444; }
-.fw-edge.reject { stroke: #f59e0b; }
-.fw-edge.passthrough { stroke: #3b82f6; }
-.fw-edge.fasttrack-connection { stroke: #14b8a6; }
-.fw-edge-group:hover .fw-edge {
-  opacity: 1;
-  stroke-width: 3.5;
-}
-
-.fw-node {
-  stroke-width: 2;
-  transition: r 0.15s;
-  cursor: default;
-}
-.fw-node.router    { fill: #1e293b; stroke: #3b82f6; }
-.fw-node.interface { fill: #0f172a; stroke: #06b6d4; }
-.fw-node.vlan      { fill: #1a0a2e; stroke: #a855f7; }
-.fw-node.network   { fill: #0f172a; stroke: #6b7280; }
-.fw-node-group:hover .fw-node { stroke-width: 3; }
-
-.fw-node-label {
-  fill: #e2e8f0;
-  font-size: 8px;
-  font-family: var(--font);
-  pointer-events: none;
-}
-.fw-node-text {
-  fill: var(--text-muted);
-  font-size: 6px;
-  font-family: var(--font-mono);
-  pointer-events: none;
-}
 
 .fw-table-wrap {
   border-top: 1px solid var(--border);
@@ -1270,5 +1225,264 @@ tbody tr:last-child td {
 .dhcp-subnet-hint {
   font-size: 10px;
   color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ---------- Diagnostics ---------- */
+.diag-profile-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.diag-profile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.diag-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.diag-profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.diag-profile-cpu {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+.diag-profile-bar-track {
+  height: 6px;
+  background: #1e293b;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.diag-profile-bar-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.diag-profile-bar-fill.diag-cpu-mid  { background: #f59e0b; }
+.diag-profile-bar-fill.diag-cpu-high { background: #ef4444; }
+
+.diag-empty-hint {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.diag-states {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.diag-state-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.diag-state-label {
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+.diag-state-count {
+  color: #e2e8f0;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.diag-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.diag-sat-bar-track {
+  height: 4px;
+  background: #1e293b;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.diag-sat-bar-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.diag-talkers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.diag-talker-card {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+.diag-talker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.diag-talker-ip {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+}
+.diag-talker-stats {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.diag-talker-conns {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+.diag-talker-bytes {
+  font-size: 12px;
+  font-weight: 700;
+  color: #22c55e;
+  font-family: var(--font-mono);
+}
+.diag-talker-ports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+.diag-port-badge {
+  font-size: 10px;
+  color: #94a3b8;
+  background: #1e293b;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+}
+
+.diag-top-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.diag-top-rule {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+.diag-top-rule-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.diag-top-rule-idx {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  font-family: var(--font-mono);
+  min-width: 16px;
+}
+.diag-top-rule-chain {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  flex: 1;
+}
+.diag-top-rule-action {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.diag-act-accept      { background: #22c55e22; color: #22c55e; }
+.diag-act-drop        { background: #ef444422; color: #ef4444; }
+.diag-act-reject      { background: #f59e0b22; color: #f59e0b; }
+.diag-act-passthrough { background: #3b82f622; color: #3b82f6; }
+.diag-act-dst-nat     { background: #a855f722; color: #a855f7; }
+.diag-act-src-nat     { background: #ec489922; color: #ec4899; }
+.diag-act-masquerade  { background: #f9731622; color: #f97316; }
+.diag-act-mark-routing{ background: #14b8a622; color: #14b8a6; }
+.diag-act-mark-packet { background: #8b5cf622; color: #8b5cf6; }
+.diag-act-mark-connection { background: #06b6d422; color: #06b6d4; }
+.diag-act-fasttrack-connection { background: #84cc1622; color: #84cc16; }
+.diag-top-rule-bytes {
+  font-size: 12px;
+  font-weight: 700;
+  color: #22c55e;
+  font-family: var(--font-mono);
+}
+.diag-top-rule-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  padding-left: 24px;
+}
+
+.diag-stat-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 0;
+}
+.diag-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #22c55e;
+  font-family: var(--font-mono);
+}
+.diag-stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.diag-traffic {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+.diag-traffic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.diag-traffic-dir {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  min-width: 32px;
+  text-align: center;
+}
+.diag-traffic-dir.diag-rx { background: #22c55e22; color: #22c55e; }
+.diag-traffic-dir.diag-tx { background: #3b82f622; color: #3b82f6; }
+.diag-traffic-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
   font-family: var(--font-mono);
 }
