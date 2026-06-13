@@ -65,10 +65,6 @@ func (h *Handler) HandleConnectionTracking(w http.ResponseWriter, r *http.Reques
 	h.proxy(w, "ip/firewall/connection/tracking")
 }
 
-func (h *Handler) HandleToolProfile(w http.ResponseWriter, r *http.Request) {
-	h.proxy(w, "tool/profile")
-}
-
 func (h *Handler) HandleSystemResourceCPU(w http.ResponseWriter, r *http.Request) {
 	h.proxy(w, "system/resource/cpu")
 }

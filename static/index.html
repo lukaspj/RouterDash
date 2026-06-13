@@ -581,24 +581,8 @@
           </span>
         </div>
         <div class="card-body" x-show="!diagnosticsLoading && !diagnosticsError">
-          <!-- tool/profile data -->
-          <template x-if="diagnostics.profile.length">
-            <div class="diag-profile-grid">
-              <template x-for="p in diagnostics.profile" :key="p['.id'] || p.name">
-                <div class="diag-profile-item">
-                  <div class="diag-profile-header">
-                    <span class="diag-profile-name" x-text="p.name || p['.id']"></span>
-                    <span class="diag-profile-cpu" x-text="(p.cpu || 0) + '%'"></span>
-                  </div>
-                  <div class="diag-profile-bar-track">
-                    <div class="diag-profile-bar-fill" :class="(parseFloat(p.cpu) || 0) > 50 ? 'diag-cpu-high' : (parseFloat(p.cpu) || 0) > 20 ? 'diag-cpu-mid' : ''" :style="{ width: (p.cpu || 0) + '%' }"></div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </template>
-          <!-- Per-core CPU fallback -->
-          <template x-if="!diagnostics.profile.length && diagnostics.cpuCores.length">
+          <!-- Per-core CPU -->
+          <template x-if="diagnostics.cpuCores.length">
             <div class="diag-profile-grid">
               <template x-for="(core, idx) in diagnostics.cpuCores" :key="core['.id'] || idx">
                 <div class="diag-profile-item">
@@ -613,9 +597,8 @@
               </template>
             </div>
           </template>
-          <!-- No CPU profiling available -->
-          <template x-if="!diagnostics.profile.length && !diagnostics.cpuCores.length">
-            <div class="diag-empty-hint">CPU profiling not available on this device</div>
+          <template x-if="!diagnostics.cpuCores.length">
+            <div class="diag-empty-hint">Per-core CPU data not available on this device</div>
           </template>
         </div>
         <div class="loading-state" x-show="diagnosticsLoading">
@@ -828,6 +811,7 @@
       hardwareError: '',
       diagnosticsLoading: true,
       diagnosticsError: '',
+      diagnosticsFetched: false,
       diagnostics: { profile: [], connections: [], cpuCores: [], topRules: [], connStates: {}, connProto: {}, topTalkers: [], tracking: {} },
 
       // --- Init ---
@@ -1107,6 +1091,8 @@
           if (r['dst-address'] && r['dst-address'] !== '0.0.0.0/0') badges.push({t:'to',v:esc(r['dst-address']),c:'b-dst'});
           if (r['in-interface'] && r['in-interface'] !== 'all') badges.push({t:'in',v:esc(r['in-interface']),c:'b-in'});
           if (r['out-interface'] && r['out-interface'] !== 'all') badges.push({t:'out',v:esc(r['out-interface']),c:'b-out'});
+          if (r['src-port'] && r['src-port'] !== '0') badges.push({t:'sport',v:esc(r['src-port']),c:'b-src'});
+          if (r['dst-port'] && r['dst-port'] !== '0') badges.push({t:'dport',v:esc(r['dst-port']),c:'b-dst'});
           if (r['connection-state'] && r['connection-state'] !== 'all') badges.push({t:'state',v:esc(r['connection-state']),c:'b-state'});
           if (r.protocol && r.protocol !== 'all') badges.push({t:esc(r.protocol),v:'',c:'b-proto'});
           const comment = r.comment ? esc(r.comment) : '';
@@ -1147,11 +1133,10 @@
 
       // --- Diagnostics ---
       async fetchDiagnostics() {
-        const hasData = this.diagnostics.profile.length > 0;
+        const hasData = this.diagnosticsFetched;
         if (!hasData) { this.diagnosticsLoading = true; this.diagnosticsError = ''; }
         try {
-          const [profile, conns, cpu, tracking] = await Promise.all([
-            this.apiFetch('/api/tool/profile').catch(() => []),
+          const [conns, cpu, tracking] = await Promise.all([
             this.apiFetch('/api/ip/firewall/connection').catch(() => []),
             this.apiFetch('/api/system/resource/cpu').catch(() => []),
             this.apiFetch('/api/ip/firewall/connection/tracking').catch(() => ({})),
@@ -1187,7 +1172,7 @@
               ports: [...t.ports].slice(0, 5),
             }));
           this.diagnostics = {
-            profile: Array.isArray(profile) ? profile : [],
+            profile: [],
             connections: Array.isArray(conns) ? conns : [],
             cpuCores: Array.isArray(cpu) ? cpu : [],
             topRules,
@@ -1198,6 +1183,7 @@
             totalRx: this.interfaces.reduce((s, i) => s + parseInt(i['rx-byte'] || 0), 0),
             totalTx: this.interfaces.reduce((s, i) => s + parseInt(i['tx-byte'] || 0), 0),
           };
+          this.diagnosticsFetched = true;
         } catch (err) {
           if (!hasData) { this.diagnosticsError = err.message || 'Unable to reach API'; }
         }

@@ -44,7 +44,6 @@ func main() {
 			"/api/ip/firewall/raw":       h.HandleFirewallRaw,
 			"/api/ip/firewall/connection": h.HandleFirewallConnections,
 			"/api/ip/firewall/connection/tracking": h.HandleConnectionTracking,
-			"/api/tool/profile":           h.HandleToolProfile,
 			"/api/system/resource/cpu":     h.HandleSystemResourceCPU,
 			"/api/interface/wireless":    h.HandleWirelessInterfaces,
 			"/api/interface/bridge/port": h.HandleBridgePorts,
