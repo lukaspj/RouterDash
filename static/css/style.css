@@ -723,6 +723,10 @@ tbody tr:last-child td {
   background: var(--bg-card);
   max-height: 60vh;
 }
+.fw-graph-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
 .fw-svg {
   display: block;
   width: 100%;
@@ -828,6 +832,15 @@ tbody tr:last-child td {
 .cf-rule-action.cf-fasttrack-connection { fill: #14b8a6; }
 .cf-rule-cond { fill: #94a3b8; font-size: 5px; font-family: var(--font-mono); }
 .cf-traffic { fill: #64748b; font-size: 5px; font-family: var(--font-mono); }
+.cf-comment { fill: #fbbf24; font-size: 5px; font-family: var(--font); font-style: italic; }
+.cf-badge { stroke-width: 1; }
+.cf-badge.b-src   { fill: #1d4ed8; stroke: #3b82f6; }
+.cf-badge.b-dst   { fill: #7c3aed; stroke: #a855f7; }
+.cf-badge.b-in    { fill: #0891b2; stroke: #06b6d4; }
+.cf-badge.b-out   { fill: #ea580c; stroke: #f97316; }
+.cf-badge.b-state { fill: #d97706; stroke: #f59e0b; }
+.cf-badge.b-proto { fill: #475569; stroke: #64748b; }
+.cf-badge-text { fill: #fff; font-size: 4.5px; font-family: var(--font-mono); font-weight: 500; }
 
 .cf-edge { stroke-width: 1.5; fill: none; }
 .cf-edge.cf-accept { stroke: #22c55e; }
