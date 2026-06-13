@@ -310,42 +310,48 @@
     <section class="section" :class="{ active: activeTab === 'firewall' }" x-show="activeTab === 'firewall'">
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Firewall Filter Rules</span>
+          <span class="card-title">Firewall Topology</span>
           <span class="text-muted" style="font-size:12px" x-show="firewallRules.length">
-            <span x-text="firewallRules.length"></span> rules
+            <span x-text="firewallRules.length"></span> rules &middot;
+            <span x-text="fwGraph.nodes.length"></span> zones &middot;
+            <span x-text="fwGraph.edges.length"></span> flows
           </span>
         </div>
-        <div class="table-wrap" x-show="!firewallLoading && !firewallError && firewallRules.length">
+        <div class="fw-legend">
+          <span class="fw-legend-item"><span class="fw-legend-swatch accept"></span> Accept</span>
+          <span class="fw-legend-item"><span class="fw-legend-swatch drop"></span> Drop</span>
+          <span class="fw-legend-item"><span class="fw-legend-swatch reject"></span> Reject</span>
+          <span class="fw-legend-item"><span class="fw-legend-sep">|</span></span>
+          <span class="fw-legend-item"><span class="fw-legend-dot vlan"></span> VLAN</span>
+          <span class="fw-legend-item"><span class="fw-legend-dot iface"></span> Interface</span>
+          <span class="fw-legend-item"><span class="fw-legend-dot net"></span> Network</span>
+        </div>
+        <div class="fw-graph-wrap" x-show="!firewallLoading && !firewallError && fwGraph.nodes.length" x-html="fwGraphSvg"></div>
+        <div class="fw-table-wrap" x-show="!firewallLoading && !firewallError && firewallRules.length">
           <table>
             <thead>
               <tr>
                 <th>#</th>
                 <th>Chain</th>
                 <th>Action</th>
+                <th>In Interface</th>
+                <th>Out Interface</th>
                 <th>Src Address</th>
                 <th>Dst Address</th>
-                <th>Protocol</th>
-                <th class="text-right">Bytes</th>
-                <th class="text-right">Packets</th>
+                <th>Proto</th>
               </tr>
             </thead>
             <tbody>
               <template x-for="(rule, idx) in firewallRules" :key="rule['.id'] || idx">
                 <tr>
                   <td class="text-muted" x-text="idx + 1"></td>
-                  <td>
-                    <span class="badge" :class="rule.chain === 'input' ? 'badge-info' : (rule.chain === 'forward' ? 'badge-warning' : (rule.chain === 'output' ? 'badge-success' : 'badge-mono'))"
-                          x-text="rule.chain || '--'"></span>
-                  </td>
-                  <td>
-                    <span class="badge" :class="rule.action === 'accept' ? 'badge-success' : (rule.action === 'drop' ? 'badge-danger' : 'badge-warning')"
-                          x-text="rule.action || '--'"></span>
-                  </td>
+                  <td><span class="badge" :class="rule.chain === 'input' ? 'badge-info' : (rule.chain === 'forward' ? 'badge-warning' : (rule.chain === 'output' ? 'badge-success' : 'badge-mono'))" x-text="rule.chain || '--'"></span></td>
+                  <td><span class="badge" :class="rule.action === 'accept' ? 'badge-success' : (rule.action === 'drop' ? 'badge-danger' : 'badge-warning')" x-text="rule.action || '--'"></span></td>
+                  <td class="mono" x-text="rule['in-interface'] || 'any'"></td>
+                  <td class="mono" x-text="rule['out-interface'] || 'any'"></td>
                   <td class="mono" x-text="rule['src-address'] || 'any'"></td>
                   <td class="mono" x-text="rule['dst-address'] || 'any'"></td>
                   <td x-text="rule.protocol || 'any'"></td>
-                  <td class="text-right mono text-muted" x-text="formatBytes(rule.bytes)"></td>
-                  <td class="text-right mono text-muted" x-text="formatNumber(rule.packets)"></td>
                 </tr>
               </template>
             </tbody>
@@ -473,6 +479,7 @@
       interfaces: [],
       dhcpLeases: [],
       firewallRules: [],
+      fwGraph: { nodes: [], edges: [] },
       wirelessInterfaces: [],
 
       // --- Loading/Error per section ---
@@ -611,10 +618,106 @@
         try {
           this.firewallRules = await this.apiFetch('/api/ip/firewall/filter');
           this.quickStats.firewallRules = this.firewallRules.length;
+          this.buildFirewallGraph();
         } catch (err) {
           this.firewallError = err.message || 'Unable to reach API';
         }
         this.firewallLoading = false;
+      },
+
+      buildFirewallGraph() {
+        const rules = this.firewallRules;
+        const interfaces = new Set();
+        const networks = new Set();
+
+        for (const r of rules) {
+          if (r['in-interface'] && r['in-interface'] !== 'all') interfaces.add(r['in-interface']);
+          if (r['out-interface'] && r['out-interface'] !== 'all') interfaces.add(r['out-interface']);
+          const src = r['src-address'];
+          const dst = r['dst-address'];
+          if (src && src !== '0.0.0.0/0' && src.includes('/')) networks.add(src);
+          if (dst && dst !== '0.0.0.0/0' && dst.includes('/')) networks.add(dst);
+        }
+
+        const nodes = [];
+        nodes.push({ id: 'router', label: this.identity || 'Router', type: 'router', x: 400, y: 300 });
+
+        const cx = 400, cy = 300, ifaceR = 150, netR = 280;
+        const ifaceArr = [...interfaces];
+        ifaceArr.forEach((name, i) => {
+          const a = (i / ifaceArr.length) * 2 * Math.PI - Math.PI / 2;
+          const isVlan = /^vlan\d+$/i.test(name) || name.toLowerCase().includes('vlan');
+          nodes.push({ id: 'iface:' + name, label: name, type: isVlan ? 'vlan' : 'interface', x: cx + ifaceR * Math.cos(a), y: cy + ifaceR * Math.sin(a) });
+        });
+
+        const netArr = [...networks];
+        netArr.forEach((net, i) => {
+          const a = (i / netArr.length) * 2 * Math.PI - Math.PI / 2;
+          nodes.push({ id: 'net:' + net, label: net, type: 'network', x: cx + netR * Math.cos(a), y: cy + netR * Math.sin(a) });
+        });
+
+        const nodeMap = {};
+        nodes.forEach(n => { nodeMap[n.id] = n; });
+
+        const edgeMap = new Map();
+        for (const r of rules) {
+          const srcI = r['in-interface'];
+          const dstI = r['out-interface'];
+          const srcN = r['src-address'];
+          const dstN = r['dst-address'];
+
+          let srcId = 'router', dstId = 'router';
+          if (srcI && srcI !== 'all') srcId = 'iface:' + srcI;
+          else if (srcN && srcN !== '0.0.0.0/0' && srcN.includes('/')) srcId = 'net:' + srcN;
+          if (dstI && dstI !== 'all') dstId = 'iface:' + dstI;
+          else if (dstN && dstN !== '0.0.0.0/0' && dstN.includes('/')) dstId = 'net:' + dstN;
+          if (srcId === dstId) continue;
+
+          const srcN2 = nodeMap[srcId], dstN2 = nodeMap[dstId];
+          if (!srcN2 || !dstN2) continue;
+
+          const key = srcId + '|' + dstId + '|' + (r.action || 'accept');
+          if (edgeMap.has(key)) {
+            edgeMap.get(key).rules.push(r);
+          } else {
+            edgeMap.set(key, {
+              id: key,
+              from: srcId, to: dstId,
+              action: r.action || 'accept',
+              chain: r.chain || 'forward',
+              srcX: srcN2.x, srcY: srcN2.y,
+              dstX: dstN2.x, dstY: dstN2.y,
+              rules: [r],
+            });
+          }
+        }
+        this.fwGraph = { nodes, edges: [...edgeMap.values()] };
+      },
+
+      get fwGraphSvg() {
+        const g = this.fwGraph;
+        if (!g.nodes.length) return '';
+        const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        let svg = '<svg viewBox="0 0 800 600" class="fw-svg">';
+        svg += '<defs>';
+        svg += '<marker id="arr-accept" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#22c55e"/></marker>';
+        svg += '<marker id="arr-drop" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ef4444"/></marker>';
+        svg += '<marker id="arr-reject" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/></marker>';
+        svg += '</defs>';
+        for (const e of g.edges) {
+          const tip = esc(e.action.toUpperCase() + ' | ' + e.chain + ' chain\n' +
+            e.rules.map(r => (r['src-address']||'any') + ' → ' + (r['dst-address']||'any') + (r.protocol ? ' (' + r.protocol + ')' : '')).join('\n'));
+          svg += `<g class="fw-edge-group"><line x1="${e.srcX}" y1="${e.srcY}" x2="${e.dstX}" y2="${e.dstY}" class="fw-edge ${e.action}" marker-end="url(#arr-${e.action})"/><title>${tip}</title></g>`;
+        }
+        for (const n of g.nodes) {
+          const r = n.type === 'router' ? 28 : 22;
+          const labelY = n.type === 'router' ? n.y + 42 : n.y + 36;
+          const icon = n.type === 'router' ? '⚙' : '';
+          const iconY = n.type === 'router' ? n.y + 5 : n.y + 4;
+          svg += `<g class="fw-node-group"><circle cx="${n.x}" cy="${n.y}" r="${r}" class="fw-node ${n.type}"/><text x="${n.x}" y="${iconY}" class="fw-node-label" text-anchor="middle" dominant-baseline="middle">${icon}</text><text x="${n.x}" y="${labelY}" class="fw-node-text" text-anchor="middle">${esc(n.label)}</text></g>`;
+        }
+        svg += '</svg>';
+        return svg;
       },
 
       // --- Wireless ---

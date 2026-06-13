@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"mikrodash/internal/routeros"
 )
@@ -52,6 +53,10 @@ func (h *Handler) proxy(w http.ResponseWriter, restPath string) {
 	data, err := h.client.Get(restPath)
 	if err != nil {
 		log.Printf("proxy error [%s]: %v", restPath, err)
+		if strings.Contains(err.Error(), "no such command") || strings.Contains(err.Error(), "no such item") {
+			writeJSON(w, http.StatusOK, []byte("[]"))
+			return
+		}
 		writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}

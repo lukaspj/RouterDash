@@ -680,3 +680,93 @@ tbody tr:last-child td {
 .mt-4 { margin-top: 16px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-4 { margin-bottom: 16px; }
+
+/* ---------- Firewall Graph ---------- */
+.fw-legend {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.fw-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.fw-legend-swatch {
+  width: 18px;
+  height: 3px;
+  border-radius: 1px;
+}
+.fw-legend-swatch.accept { background: #22c55e; }
+.fw-legend-swatch.drop   { background: #ef4444; }
+.fw-legend-swatch.reject { background: #f59e0b; }
+.fw-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.fw-legend-dot.vlan      { background: #a855f7; border: 1px solid #c084fc; }
+.fw-legend-dot.iface     { background: #06b6d4; border: 1px solid #22d3ee; }
+.fw-legend-dot.net       { background: #6b7280; border: 1px solid #9ca3af; }
+.fw-legend-sep { color: var(--border); }
+
+.fw-graph-wrap {
+  overflow: auto;
+  padding: 0;
+  background: var(--bg-card);
+}
+.fw-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 420px;
+}
+
+.fw-edge {
+  stroke-width: 2;
+  fill: none;
+  opacity: 0.6;
+  transition: opacity 0.15s, stroke-width 0.15s;
+}
+.fw-edge.accept { stroke: #22c55e; }
+.fw-edge.drop   { stroke: #ef4444; }
+.fw-edge.reject { stroke: #f59e0b; }
+.fw-edge-group:hover .fw-edge {
+  opacity: 1;
+  stroke-width: 3.5;
+}
+
+.fw-node {
+  stroke-width: 2;
+  transition: r 0.15s;
+  cursor: default;
+}
+.fw-node.router    { fill: #1e293b; stroke: #3b82f6; }
+.fw-node.interface { fill: #0f172a; stroke: #06b6d4; }
+.fw-node.vlan      { fill: #1a0a2e; stroke: #a855f7; }
+.fw-node.network   { fill: #0f172a; stroke: #6b7280; }
+.fw-node-group:hover .fw-node { stroke-width: 3; }
+
+.fw-node-label {
+  fill: #e2e8f0;
+  font-size: 14px;
+  font-family: var(--font);
+  pointer-events: none;
+}
+.fw-node-text {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  pointer-events: none;
+}
+
+.fw-table-wrap {
+  border-top: 1px solid var(--border);
+  max-height: 320px;
+  overflow: auto;
+}
