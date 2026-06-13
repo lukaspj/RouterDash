@@ -207,36 +207,40 @@
             <span x-text="interfaces.length"></span> total
           </span>
         </div>
-        <div class="table-wrap" x-show="!interfacesLoading && !interfacesError && interfaces.length">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>MAC Address</th>
-                <th>Status</th>
-                <th class="text-right">Rx Bytes</th>
-                <th class="text-right">Tx Bytes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="iface in interfaces" :key="iface.name || iface['.id']">
-                <tr>
-                  <td><strong x-text="iface.name || iface['.id']"></strong></td>
-                  <td x-text="iface.type || '--'"></td>
-                  <td class="mono" x-text="iface['mac-address'] || '--'"></td>
-                  <td>
-                    <span class="status">
-                      <span class="status-dot" :class="iface.running === 'true' || iface.disabled === 'false' ? 'running' : 'disabled'"></span>
-                      <span x-text="iface.running === 'true' || (iface.running !== 'false' && iface.disabled === 'false') ? 'Running' : iface.disabled === 'true' ? 'Disabled' : 'Stopped'"></span>
-                    </span>
-                  </td>
-                  <td class="text-right mono text-muted" x-text="formatBytes(iface['rx-byte'])"></td>
-                  <td class="text-right mono text-muted" x-text="formatBytes(iface['tx-byte'])"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+        <div class="port-grid" x-show="!interfacesLoading && !interfacesError && interfaces.length">
+          <template x-for="iface in interfaces" :key="iface.name || iface['.id']">
+            <div class="port-card"
+                 :class="{
+                   'port-up': iface.running === 'true' || (iface.disabled === 'false' && iface.running !== 'false'),
+                   'port-down': !(iface.running === 'true' || (iface.disabled === 'false' && iface.running !== 'false')),
+                   'pt-ether': (/^ether/i.test(iface.type) || (/^ether/i.test(iface.name) && !/wireguard|wlan|wireless|bridge|vlan|bond|tunnel|ppp|l2tp|pptp|sstp|ovpn|gre|eoip|ipip|loopback|lo$|vrrp/i.test(iface.type||''))),
+                   'pt-wlan': (/wireless|wlan/i.test(iface.type) || /wlan/i.test(iface.name)),
+                   'pt-wg': (/wireguard|wg$/i.test(iface.type) || /wireguard|wg$/i.test(iface.name)),
+                   'pt-bridge': (/^bridge/i.test(iface.type) || /^bridge/i.test(iface.name)),
+                   'pt-vlan': (/^vlan/i.test(iface.type) || /^vlan/i.test(iface.name)),
+                   'pt-bond': (/bond/i.test(iface.type) || /bond/i.test(iface.name)),
+                   'pt-tunnel': (/tunnel|ppp|l2tp|pptp|sstp|ovpn|gre|eoip|ipip/i.test(iface.type) || /tunnel|ppp|vpn/i.test(iface.name)),
+                   'pt-loopback': (/loopback|lo$/i.test(iface.type) || /^lo$/i.test(iface.name)),
+                   'pt-vrrp': (/vrrp/i.test(iface.type) || /vrrp/i.test(iface.name))
+                 }">
+              <div class="port-top">
+                <span class="port-type" x-text="iface.type || 'ether'"></span>
+                <span class="port-dot" :class="iface.running === 'true' || (iface.disabled === 'false' && iface.running !== 'false') ? 'up' : 'down'"></span>
+              </div>
+              <div class="port-name" x-text="iface.name || iface['.id']"></div>
+              <div class="port-mac" x-text="iface['mac-address'] || ''"></div>
+              <div class="port-traffic">
+                <div class="port-traffic-row">
+                  <span class="port-traffic-label">RX</span>
+                  <span class="port-traffic-val" x-text="formatBytes(iface['rx-byte'])"></span>
+                </div>
+                <div class="port-traffic-row">
+                  <span class="port-traffic-label">TX</span>
+                  <span class="port-traffic-val" x-text="formatBytes(iface['tx-byte'])"></span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
         <div class="loading-state" x-show="interfacesLoading">
           <div class="loading-spinner"></div>
@@ -783,7 +787,7 @@
           if (v >= 1e3) return (v/1e3).toFixed(1)+'K';
           return v.toString();
         };
-        const spacing = 50, boxW = 280, boxH = 44, left = 20, pillGap = 30;
+        const spacing = 68, boxW = 280, boxH = 44, left = 20, pillGap = 30;
         const pillX = left + boxW + pillGap;
         const h = 30 + rules.length * spacing + 40;
         const w = pillX + 70;

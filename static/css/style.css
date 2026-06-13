@@ -729,9 +729,8 @@ tbody tr:last-child td {
 }
 .fw-svg {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
-  min-height: 200px;
 }
 
 .fw-edge {
@@ -856,3 +855,80 @@ tbody tr:last-child td {
 .cf-action-pill.cf-passthrough { stroke: #3b82f6; }
 .cf-action-pill.cf-fasttrack-connection { stroke: #14b8a6; }
 .cf-action-label { fill: #e2e8f0; font-size: 5px; font-family: var(--font); font-weight: 600; text-transform: uppercase; }
+
+/* ---------- Port Grid ---------- */
+.port-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+.port-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: border-color 0.2s;
+}
+.port-card.port-up   { border-color: #22c55e; background: linear-gradient(135deg, #052e16 0%, #0f172a 100%); }
+.port-card.port-down { border-color: #374151; background: linear-gradient(135deg, #1f2937 0%, #0f172a 100%); }
+
+.port-card.pt-ether.port-up   { border-color: #3b82f6; background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); }
+.port-card.pt-ether.port-down { border-color: #1e3a5f; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+.port-card.pt-wlan.port-up   { border-color: #14b8a6; background: linear-gradient(135deg, #134e4a 0%, #0f172a 100%); }
+.port-card.pt-wlan.port-down { border-color: #134e4a; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+.port-card.pt-wg.port-up   { border-color: #34d399; background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); border-style: dashed; }
+.port-card.pt-wg.port-down { border-color: #064e3b; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-style: dashed; }
+.port-card.pt-bridge.port-up   { border-color: #a855f7; background: linear-gradient(135deg, #2e1065 0%, #0f172a 100%); grid-column: span 2; }
+.port-card.pt-bridge.port-down { border-color: #2e1065; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); grid-column: span 2; }
+.port-card.pt-vlan.port-up   { border-color: #6366f1; background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border-style: dashed; }
+.port-card.pt-vlan.port-down { border-color: #1e1b4b; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-style: dashed; }
+.port-card.pt-bond.port-up   { border-color: #22d3ee; background: linear-gradient(135deg, #164e63 0%, #0f172a 100%); }
+.port-card.pt-bond.port-down { border-color: #164e63; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+.port-card.pt-tunnel.port-up   { border-color: #f97316; background: linear-gradient(135deg, #451a03 0%, #0f172a 100%); }
+.port-card.pt-tunnel.port-down { border-color: #451a03; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+.port-card.pt-vrrp.port-up   { border-color: #eab308; background: linear-gradient(135deg, #422006 0%, #0f172a 100%); }
+.port-card.pt-vrrp.port-down { border-color: #422006; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+.port-card.pt-loopback { border-color: #475569 !important; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important; border-style: dotted !important; }
+.port-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.port-type {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.port-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.port-dot.up   { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.port-dot.down { background: #374151; }
+.port-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+.port-mac {
+  font-size: 10px;
+  color: #64748b;
+  font-family: var(--font-mono);
+  margin-bottom: 10px;
+}
+.port-traffic-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.port-traffic-label { color: var(--text-muted); }
+.port-traffic-val   { color: #94a3b8; font-family: var(--font-mono); }
