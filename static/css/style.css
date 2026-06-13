@@ -828,13 +828,75 @@ tbody tr:last-child td {
   padding: 3px 14px;
   border-radius: 10px;
   font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: #e2e8f0;
+  border: 1.5px solid;
+  background: #1e293b;
+}
+.cf-entry  { border-color: #3b82f6; }
+.cf-default { border-color: #f59e0b; }
+
+/* Down arrow */
+.cf-arrow-down {
+  width: 2px;
+  height: 0.9rem;
+  background: #475569;
+  position: relative;
+  flex-shrink: 0;
+  margin: 1px 0;
+}
+.cf-arrow-down::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -3px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #475569;
+}
+
+/* Rule row */
+.cf-rule-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 3px 0;
+}
+
+/* Rule card */
+.cf-rule-card {
+  flex: 1;
+  min-width: 0;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-left: 3px solid #334155;
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+.cf-rule-card.cf-accept              { border-left-color: #22c55e; }
+.cf-rule-card.cf-drop                { border-left-color: #ef4444; }
+.cf-rule-card.cf-reject              { border-left-color: #f59e0b; }
+.cf-rule-card.cf-passthrough         { border-left-color: #3b82f6; }
+.cf-rule-card.cf-fasttrack-connection { border-left-color: #14b8a6; }
+
+.cf-rule-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cf-rule-num {
+  font-size: 0.85rem;
   font-family: var(--font-mono);
   color: #64748b;
   white-space: nowrap;
 }
 
 .cf-rule-action {
-  font-size: 12px;
+  font-size: 0.85rem;
   font-family: var(--font-sans);
   font-weight: 600;
   text-transform: uppercase;
@@ -846,7 +908,7 @@ tbody tr:last-child td {
 .cf-rule-action.cf-fasttrack-connection { color: #14b8a6; }
 
 .cf-traffic {
-  font-size: 11px;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
   color: #64748b;
   margin-left: auto;
@@ -862,7 +924,7 @@ tbody tr:last-child td {
 }
 
 .cf-badge {
-  font-size: 11px;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
   font-weight: 500;
   color: #fff;
@@ -880,7 +942,7 @@ tbody tr:last-child td {
 
 /* Comment */
 .cf-comment {
-  font-size: 11px;
+  font-size: 0.8rem;
   font-family: var(--font-sans);
   font-style: italic;
   color: #fbbf24;
@@ -1028,29 +1090,44 @@ tbody tr:last-child td {
   border: 1px solid #334155;
   border-radius: 6px;
   padding: 10px 12px;
+  transition: border-color 0.2s, opacity 0.2s;
 }
-.eth-card.eth-up   { border-color: #22c55e44; }
-.eth-card.eth-down { border-color: #374151; opacity: 0.7; }
+.eth-card.eth-up   { border-color: #334155; }
+.eth-card.eth-down { border-color: #374151; opacity: 0.6; }
 .eth-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
 }
+.eth-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.eth-dot-up   { background: #22c55e; box-shadow: 0 0 4px #22c55e88; }
+.eth-dot-down { background: #64748b; }
 .eth-name {
   font-size: 13px;
   font-weight: 700;
   color: #e2e8f0;
   font-family: var(--font-mono);
 }
-.eth-speed {
+.eth-status {
   font-size: 10px;
   font-weight: 600;
-  color: #22c55e;
-  font-family: var(--font-mono);
-  background: #22c55e18;
+  text-transform: uppercase;
   padding: 1px 6px;
   border-radius: 4px;
+}
+.eth-status-up   { color: #22c55e; background: #22c55e18; }
+.eth-status-down { color: #64748b; background: #334155; }
+.eth-speed {
+  color: #22c55e;
+  font-weight: 600;
 }
 .eth-details {
   display: flex;

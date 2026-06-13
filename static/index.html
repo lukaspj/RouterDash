@@ -283,10 +283,16 @@
               <template x-for="eth in ethernetInterfaces" :key="eth['.id']">
                 <div class="eth-card" :class="eth.running === 'true' ? 'eth-up' : 'eth-down'">
                   <div class="eth-header">
-                    <span class="eth-name" x-text="eth.name || eth['default-name'] || eth['.id']"></span>
-                    <span class="eth-speed" x-text="eth.speed || eth['auto-negotiation'] || ''"></span>
+                    <span class="eth-name"><span class="eth-dot" :class="eth.running === 'true' ? 'eth-dot-up' : 'eth-dot-down'"></span><span x-text="eth.name || eth['default-name'] || eth['.id']"></span></span>
+                    <span class="eth-status" :class="eth.running === 'true' ? 'eth-status-up' : 'eth-status-down'" x-text="eth.running === 'true' ? 'up' : 'down'"></span>
                   </div>
                   <div class="eth-details">
+                    <template x-if="eth.speed">
+                      <div class="eth-row">
+                        <span class="eth-label">Speed</span>
+                        <span class="eth-val eth-speed" x-text="eth.speed"></span>
+                      </div>
+                    </template>
                     <div class="eth-row">
                       <span class="eth-label">MAC</span>
                       <span class="eth-val" x-text="eth['mac-address'] || '--'"></span>
