@@ -57,6 +57,14 @@ func (h *Handler) HandleEthernetInterfaces(w http.ResponseWriter, r *http.Reques
 	h.proxy(w, "interface/ethernet")
 }
 
+func (h *Handler) HandleSystemHealth(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "system/health")
+}
+
+func (h *Handler) HandleSystemRouterboard(w http.ResponseWriter, r *http.Request) {
+	h.proxy(w, "system/routerboard")
+}
+
 func (h *Handler) proxy(w http.ResponseWriter, restPath string) {
 	data, err := h.client.Get(restPath)
 	if err != nil {

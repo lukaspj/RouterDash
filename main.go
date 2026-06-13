@@ -42,6 +42,8 @@ func main() {
 			"/api/interface/wireless":    h.HandleWirelessInterfaces,
 			"/api/interface/bridge/port": h.HandleBridgePorts,
 			"/api/interface/ethernet":   h.HandleEthernetInterfaces,
+			"/api/system/health":        h.HandleSystemHealth,
+			"/api/system/routerboard":   h.HandleSystemRouterboard,
 		},
 	}
 

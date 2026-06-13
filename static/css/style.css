@@ -391,6 +391,57 @@ a {
   font-family: var(--font-mono);
 }
 
+/* ---------- Hardware ---------- */
+.hw-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.hw-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.hw-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.hw-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: #e2e8f0;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.hw-pill-icon { font-size: 12px; }
+.hw-details { margin-top: 4px; }
+.hw-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 2px 12px;
+}
+.hw-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  padding: 2px 0;
+}
+.hw-detail-label { color: var(--text-muted); }
+.hw-detail-val { color: #94a3b8; }
+.hw-mono { font-family: var(--font-mono); }
+
 /* ---------- Resource gauges ---------- */
 .gauge {
   margin-bottom: 14px;

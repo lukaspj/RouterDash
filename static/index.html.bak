@@ -136,40 +136,73 @@
                 <div class="info-item-value" x-text="system.platform || '--'">--</div>
               </div>
             </div>
-            <!-- Hardware -->
-            <div class="hw-section" x-show="!hardwareLoading && !hardwareError && Object.keys(hardware).length">
-              <div class="hw-pills">
-                <span class="hw-pill" title="CPU Temperature" x-show="hardware.temp">&#x1F321; <span x-text="hardware.temp"></span></span>
-                <span class="hw-pill" title="Board Temperature" x-show="hardware.boardTemp">&#x1F4CC; <span x-text="hardware.boardTemp"></span></span>
-                <span class="hw-pill" title="Voltage" x-show="hardware.voltage">&#x26A1; <span x-text="hardware.voltage"></span></span>
-                <span class="hw-pill" title="Current" x-show="hardware.current">&#x1F50C; <span x-text="hardware.current"></span></span>
-                <span class="hw-pill" title="Fan Speed" x-show="hardware.fan">&#x1F32C; <span x-text="hardware.fan"></span></span>
-              </div>
-              <div class="hw-details" x-show="hardware.model">
-                <div class="hw-detail-grid">
-                  <div class="hw-detail-item" x-show="hardware.model">
-                    <span class="hw-detail-label">Model</span>
-                    <span class="hw-detail-val" x-text="hardware.model"></span>
-                  </div>
-                  <div class="hw-detail-item" x-show="hardware.serial">
-                    <span class="hw-detail-label">Serial</span>
-                    <span class="hw-detail-val" x-text="hardware.serial"></span>
-                  </div>
-                  <div class="hw-detail-item" x-show="hardware.firmware">
-                    <span class="hw-detail-label">Firmware</span>
-                    <span class="hw-detail-val" x-text="hardware.firmware"></span>
-                  </div>
-                  <div class="hw-detail-item" x-show="hardware.memory">
-                    <span class="hw-detail-label">RAM</span>
-                    <span class="hw-detail-val" x-text="hardware.memory"></span>
-                  </div>
-                  <div class="hw-detail-item" x-show="hardware.storage">
-                    <span class="hw-detail-label">Storage</span>
-                    <span class="hw-detail-val" x-text="hardware.storage"></span>
-                  </div>
+            <template x-if="!hardwareLoading && !hardwareError && Object.keys(hardware).length">
+              <div class="hw-section">
+                <div class="hw-section-label">Hardware Sensors</div>
+                <div class="hw-pills">
+                  <template x-if="hardware.temp">
+                    <span class="hw-pill">
+                      <span class="hw-pill-icon">&#x1F321;</span>
+                      <span x-text="hardware.temp"></span>
+                    </span>
+                  </template>
+                  <template x-if="hardware.boardTemp">
+                    <span class="hw-pill">
+                      <span class="hw-pill-icon">&#x1F4CC;</span>
+                      <span x-text="hardware.boardTemp"></span>
+                    </span>
+                  </template>
+                  <template x-if="hardware.voltage">
+                    <span class="hw-pill">
+                      <span class="hw-pill-icon">&#x26A1;</span>
+                      <span x-text="hardware.voltage"></span>
+                    </span>
+                  </template>
+                  <template x-if="hardware.fan">
+                    <span class="hw-pill">
+                      <span class="hw-pill-icon">&#x1F32C;</span>
+                      <span x-text="hardware.fan"></span>
+                    </span>
+                  </template>
                 </div>
+                <template x-if="hardware.model || hardware.serial || hardware.firmware || hardware.memory">
+                  <div class="hw-details">
+                    <div class="hw-detail-grid">
+                      <template x-if="hardware.model">
+                        <div class="hw-detail">
+                          <span class="hw-detail-label">Model</span>
+                          <span class="hw-detail-val" x-text="hardware.model"></span>
+                        </div>
+                      </template>
+                      <template x-if="hardware.serial">
+                        <div class="hw-detail">
+                          <span class="hw-detail-label">Serial</span>
+                          <span class="hw-detail-val hw-mono" x-text="hardware.serial"></span>
+                        </div>
+                      </template>
+                      <template x-if="hardware.firmware">
+                        <div class="hw-detail">
+                          <span class="hw-detail-label">Firmware</span>
+                          <span class="hw-detail-val hw-mono" x-text="hardware.firmware"></span>
+                        </div>
+                      </template>
+                      <template x-if="hardware.memory">
+                        <div class="hw-detail">
+                          <span class="hw-detail-label">RAM</span>
+                          <span class="hw-detail-val hw-mono" x-text="hardware.memory"></span>
+                        </div>
+                      </template>
+                      <template x-if="hardware.storage">
+                        <div class="hw-detail">
+                          <span class="hw-detail-label">Storage</span>
+                          <span class="hw-detail-val hw-mono" x-text="hardware.storage"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
               </div>
-            </div>
+            </template>
           </div>
           <div class="loading-state" x-show="systemLoading">
             <div class="loading-spinner"></div>
@@ -354,7 +387,8 @@
                       </div>
                     </div>
                   </div>
-                </template>
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -621,7 +655,6 @@
       system: {},
       resources: { cpu: 0, freeMemory: 0, freeHdd: 0 },
       resourcesFetched: false,
-      hardware: {},
       quickStats: { interfaces: 0, addresses: 0, dhcpLeases: 0, firewallRules: 0 },
       interfaces: [],
       dhcpLeases: [],
@@ -632,6 +665,9 @@
       wirelessInterfaces: [],
       bridgePorts: [],
       ethernetInterfaces: [],
+      hardware: {},
+      hardwareLoading: true,
+      hardwareError: '',
 
       // --- Loading/Error per section ---
       systemLoading: true,
@@ -648,8 +684,6 @@
       wirelessError: '',
       ethernetLoading: true,
       ethernetError: '',
-      hardwareLoading: true,
-      hardwareError: '',
 
       // --- Init ---
       init() {
@@ -674,13 +708,13 @@
             this.fetchResources(),
           ]);
           // Fire section fetches based on active tab priority, but do all
-          const results = await Promise.allSettled([
-            this.fetchInterfaces(),
-            this.fetchDhcp(),
-            this.fetchFirewall(),
-            this.fetchWireless(),
-            this.fetchHardware(),
-          ]);
+    const results = await Promise.allSettled([
+      this.fetchInterfaces(),
+      this.fetchDhcp(),
+      this.fetchFirewall(),
+      this.fetchWireless(),
+      this.fetchHardware(),
+    ]);
           this.connected = true;
           this.lastRefresh = new Date().toLocaleTimeString();
         } catch (e) {
